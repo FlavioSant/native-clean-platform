@@ -108,7 +108,7 @@ src/
 ├── navigation/               composition root: lista módulos, não telas
 │   ├── RootNavigator.tsx    splash enquanto a sessão é desconhecida, depois o NavigationContainer
 │   ├── RootStack.tsx        um Stack.Screen por módulo — renderiza só o lado que a sessão escolhe
-│   ├── RootNavigator.test.tsx  colocado — o gate nos três estados de sessão
+│   ├── RootNavigator.test.tsx  colocado — o gate de ponta a ponta: provider real, só o `api` trocado
 │   ├── AppStack.tsx         o shell logado — HomeScreen + o AccountStack do módulo auth
 │   ├── types.ts             RootStackParamList/AppStackParamList — a única declaração dos nomes de rota
 │   ├── index.ts
