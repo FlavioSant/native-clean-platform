@@ -176,8 +176,8 @@ String violations are not machine-checked; catch them in review.
 
 ## 5. Structure
 
-Organised **by module, not by file type**. See [README.md](README.md) for the
-folder map.
+Organised **by module, not by file type**. See
+[ARCHITECTURE.md](ARCHITECTURE.md), section 2, for the folder map.
 
 - The `@/` alias points at `src/`. Never write `../../`.
 - Nothing imports a file inside a module — only what the module's `index.ts`

@@ -8,9 +8,11 @@ o ponto de partida que outros projetos clonam.
 react-hook-form + zod · expo-secure-store · Biome · pnpm
 
 **Status:** estrutura, ferramentas e convenções prontas, mais o módulo `auth`
-implementado contra os seis endpoints de `/auth` de `api-clean-platform`:
-cadastro, login, rotação do refresh token, restauração da sessão no boot,
-logout neste aparelho ou em todos, e gate de navegação. Há também uma camada de
+implementado contra treze dos catorze endpoints de `/auth` de
+`api-clean-platform`: cadastro com verificação de e-mail, login, recuperação e
+troca de senha, rotação do refresh token, restauração da sessão no boot, logout
+neste aparelho ou em todos, sessões ativas, exclusão da conta e gate de
+navegação. Só o login com Google está adiado. Há também uma camada de
 erros: error boundary de render, toast
 global para falhas sem tela dona, copy compartilhada por `code` e queries que
 pausam quando o aparelho fica offline.
@@ -63,12 +65,15 @@ App.tsx              raiz: providers + navegação
 biome.json            linter + formatter (substitui ESLint e Prettier)
 tailwind.config.js    lê os tokens de src/theme/tokens.js
 src/
-  components/          compartilhados entre módulos (vazio por enquanto)
+  components/          primitivas de UI (inputs, FormField, FormScreen, SubmitButton)
+  config/               variáveis de ambiente, validadas na carga
+  errors/               classificação de erro, copy, toast, boundary, QueryClient do app
+  lib/                  cliente HTTP e conectividade — I/O sem React
   screens/              telas sem módulo próprio
   navigation/           React Navigation: stack, rotas, tipos de parâmetro
   modules/              um módulo por pasta — veja src/modules/README.md
   theme/                design tokens (fonte única da verdade)
-  utils/                helpers puros (cn, formatadores)
+  utils/                helpers puros (classnames)
 ```
 
 Nada fora de um módulo importa um arquivo de dentro dele — só o que o
@@ -112,7 +117,9 @@ Prefira os aliases semânticos nas telas:
 | `bg-primary`                         | `bg-brand-500`       |
 | `border-border`                      | `border-neutral-200` |
 
-Dark mode e rebranding acontecem então em um único lugar (`semanticColors`).
+Rebranding acontece então em um único lugar (`semanticColors`). Dark mode
+**não está implementado ainda**: os aliases semânticos são o que o tornaria uma
+mudança num lugar só, mas hoje só existe o valor claro.
 
 ### Adaptando para um novo app
 
@@ -165,6 +172,8 @@ deslogado.
       cliente HTTP (axios) em `src/lib/`, `useAuth()` / `AuthProvider`,
       refresh token rotativo no `expo-secure-store` (o access token fica só em
       memória), refresh single-flight com repetição automática da request que
-      falhou, logout neste aparelho e em todos, telas de sign-in / sign-up com
-      validação, e navegação condicional entre o stack logado e o deslogado.
+      falhou, logout neste aparelho e em todos, cadastro em três passos com
+      verificação de e-mail, recuperação e troca de senha, sessões ativas,
+      exclusão de conta, e navegação condicional entre o stack logado e o
+      deslogado. Falta só o login com Google, adiado.
 - [ ] **Polimento** — guia de adoção do boilerplate.

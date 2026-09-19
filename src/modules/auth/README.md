@@ -27,6 +27,7 @@ primeiro app se aproximar do release.
 | Name            | Description                                                     |
 | --------------- | ----------------------------------------------------------------- |
 | `AUTH_STATUSES` | `loading` \| `signedOut` \| `signedIn`.                            |
+| `AUTH_ERROR_COPY` | A copy dos códigos de erro de domínio deste módulo. O `App.tsx` a registra em `@/errors`. |
 
 ## Types
 
@@ -42,7 +43,9 @@ primeiro app se aproximar do release.
 ## Flow
 
 Cada tela do fluxo deslogado (`AuthStack`) e da área logada (`AccountStack`)
-aparece como nó próprio, com a navegação real entre elas. `SignIn`,
+aparece como nó próprio, com a navegação real entre elas — inclusive a que não
+é um `navigate`: abrir ou encerrar a sessão troca o stack inteiro, porque o
+`RootStack` renderiza um lado só. `SignIn`,
 `VerifyEmail`, `ChangePassword`, `DeleteAccount` e `Account` passam pelo
 `AuthProvider` via `useAuth()`; `SignUp`, `ForgotPassword` e `ResetPassword` não
 escrevem nem leem sessão, então chamam a API direto pela própria `useMutation`,
@@ -69,11 +72,23 @@ flowchart TD
     DeleteAccount["DeleteAccount"]
   end
 
+  Home["screens/HomeScreen (AppStack)"]
+
   SignIn -- "Cadastrar" --> SignUp
+  SignIn -- "Já tenho um código" --> VerifyEmail
   SignIn -- "Esqueci a senha" --> ForgotPassword
   SignUp -- "startSignUp OK" --> VerifyEmail
+  SignUp -- "Já tenho conta" --> SignIn
+  VerifyEmail -- "Voltar" --> SignIn
   ForgotPassword -- "requestPasswordReset OK" --> ResetPassword
+  ForgotPassword -- "Voltar" --> SignIn
   ResetPassword -- "resetPassword OK" --> SignIn
+
+  SignIn -- "signIn OK: status = signedIn" --> Home
+  VerifyEmail -- "confirmSignUp OK: status = signedIn" --> Home
+  Home -- "Conta" --> Account
+  Account -- "signOut / signOutEverywhere OK: status = signedOut" --> SignIn
+  DeleteAccount -- "deleteAccount OK: status = signedOut" --> SignIn
 
   Account -- "Trocar senha" --> ChangePassword
   ChangePassword -- "changePassword OK" --> Account
@@ -212,6 +227,12 @@ flowchart TD
   com Google, toda conta tem senha e o formulário sempre a pede: quando o Google
   entrar, uma conta só-Google não terá o que digitar, e o `/auth/me` vai
   precisar dizer se a conta tem senha.
+- **Um refresh que termina depois do sign-out é descartado.** O
+  `endSession` incrementa uma época; o refresh guarda a época em que começou e,
+  se ela mudou quando a resposta chega, devolve `null` sem gravar nada — o par
+  novo pertence a uma sessão que o usuário já encerrou, e gravá-lo o logaria de
+  novo às costas do próprio sign-out. A mesma checagem impede que um refresh
+  antigo, ao falhar, derrube uma sessão **mais nova** aberta nesse intervalo.
 - **Um token que a API rejeitou é apagado; um token que falhou por rede não.**
   Estar offline no boot não é motivo para exigir a senha de novo no próximo.
 - **A `message` da API nunca vai para a tela.** A copy sai de `@/errors`,
@@ -257,7 +278,8 @@ flowchart TD
   `FormTextField` deste módulo — ele foi promovido junto com as primitivas de
   input, porque qualquer app clonado deste boilerplate precisa dos mesmos
   tipos de campo. Ver `src/components/README.md`.
-- **`FormErrorMessage` e `SubmitButton` também vêm de `@/components`.**
+- **`FormScreen`, `FormErrorMessage` e `SubmitButton` também vêm de
+  `@/components`.**
   Nasceram aqui, mas qualquer tela de formulário de qualquer app clonado
   deste boilerplate precisa dos dois — a mesma exceção do segundo consumidor
   que já promoveu os inputs, não "um segundo módulo passou a precisar

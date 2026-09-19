@@ -28,6 +28,8 @@ a copy que o usuário lê, o error boundary de render e o toast global.
 | `resetErrorCopy()` | Só para testes, para um registro não vazar de um arquivo para outro. |
 | `configureErrorReporter(fn)` | Registra quem exibe o erro. `null` desregistra. |
 | `reportError(error)` | Entrega o erro a quem estiver registrado. No-op se não houver ninguém. |
+| `createQueryClient(overrides?)` | Monta o `QueryClient` do app: retry via `shouldRetry`, `staleTime` de 30 s, reporte global de erro de query e `networkMode: 'always'` nas mutations. `overrides` (`{ queries, mutations }`) existe para testes. |
+| `applyServerFieldErrors(error, setError, fields)` | Põe os `details[]` de um `ApiError` no campo do react-hook-form que os renderiza. `fields` é uma allowlist. |
 
 ## Constants
 
@@ -52,7 +54,19 @@ a copy que o usuário lê, o error boundary de render e o toast global.
 - **Query mostra toast, mutation não.** Uma query de fundo não tem call site
   para exibir a falha; um formulário já mostra o erro de submit inline, e
   repetir em toast diria a mesma coisa duas vezes. Uma query sai da regra com
-  `meta: { silent: true }`; uma mutation entra com `meta: { toastOnError: true }`.
+  `meta: { silent: true }` (a `useSessions` usa, porque a tela desenha o erro
+  e o retry); uma mutation entra com `meta: { toastOnError: true }`. As duas
+  chaves são tipadas em `queryClient.ts` — um nome errado é erro de compilação.
+- **Mutation roda com `networkMode: 'always'`; query mantém o padrão.** O padrão
+  do TanStack PAUSA a mutation offline, e o submit ficaria pendurado para
+  sempre em vez de falhar onde o formulário consegue mostrar. Já uma query só
+  sai do padrão quando ela própria trava a UI se ficar pausada (`meQuery` do
+  boot e `useSessions`), então cada uma declara isso no seu lugar.
+- **`createQueryClient` é a única definição da política do cliente**: o
+  `App.tsx` e os testes constroem o mesmo objeto. Um teste que reimplementasse
+  o `onError` provaria a cópia, não o app. Nos testes, `overrides` desliga
+  `retry` e o `gcTime` de query **e de mutation** — cada um tem o seu timer, e
+  esquecer o das mutations deixa o Jest pendurado ao fim da execução.
 - **Erro de sessão nunca vira toast**, por nenhum caminho: o app já está levando
   o usuário para o login, e uma mensagem vermelha junto lê como uma segunda
   falha sem relação.

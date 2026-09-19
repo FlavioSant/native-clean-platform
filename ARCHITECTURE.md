@@ -7,7 +7,7 @@ Este é o único documento de arquitetura versionado. `docs/superpowers/` guarda
 specs e planos de decisões pontuais já tomadas — são referência complementar,
 não substituem este arquivo.
 
-**Stack hoje:** Expo SDK 57 (managed) · React Native 0.86 · TypeScript 6 ·
+**Stack hoje:** Expo SDK 57 (managed) · React Native 0.86 · TypeScript 7 ·
 NativeWind v4 (Tailwind 3.4) · React Navigation 7 · TanStack Query 5 · axios ·
 react-hook-form 7 + zod 4 · expo-secure-store · @react-native-community/netinfo ·
 Jest (jest-expo) +
@@ -33,8 +33,9 @@ código de servidor, banco ou emissão de token. É por isso que este documento
 não tem seção de banco de dados, taxonomia de erro de domínio ou camada de
 infra: nada disso é responsabilidade deste lado da fronteira.
 
-Hoje existe **um módulo**, `auth` (§2), construído contra os seis endpoints
-de `/auth` de `api-clean-platform`. Ele é a referência de formato para o
+Hoje existe **um módulo**, `auth` (§2), construído contra treze dos catorze
+endpoints de `/auth` de `api-clean-platform` (só `POST /auth/google` está
+adiado). Ele é a referência de formato para o
 próximo: é o `index.ts` dele que define o que o resto do app enxerga, e foi
 ele que forçou à existência os dois módulos de topo que faltavam —
 `src/config/` e `src/lib/`.
@@ -44,7 +45,7 @@ ele que forçou à existência os dois módulos de topo que faltavam —
 ## 2. A árvore
 
 ```text
-App.tsx                    raiz: providers (gesture handler, safe area, status bar) + navegação
+App.tsx                    raiz: providers (gesture handler, query client, safe area, status bar, erros, sessão) + navegação
 index.ts                   registerRootComponent — entrypoint do Expo
 global.css                  entrada do Tailwind, importada por App.tsx
 biome.json                  linter + formatter (substitui ESLint e Prettier)
@@ -53,10 +54,11 @@ tsconfig.json               extends expo/tsconfig.base — strict, noUncheckedIn
 pnpm-workspace.yaml         settings do pnpm — pnpm 11 não lê mais .npmrc (§9)
 jest.setup.ts               EXPO_PUBLIC_* de teste + keychain em memória (mock de expo-secure-store)
 .env.example                EXPO_PUBLIC_API_URL — copie para .env antes de rodar
-docs/superpowers/           specs e planos das decisões já tomadas (testes unitários, E2E)
+docs/superpowers/           specs e planos das decisões já tomadas
 src/
-├── components/               primitivas de UI conhecidas de antemão como multi-app — exceção documentada à regra do segundo consumidor (ver abaixo, não "vazio")
+├── components/               primitivas de UI conhecidas de antemão como multi-app — exceção documentada à regra do segundo consumidor
 │   ├── FormErrorMessage.tsx  mensagem de erro de formulário; `null` não renderiza nada
+│   ├── FormScreen.tsx        raiz de tela com formulário: teclado + scroll
 │   ├── SubmitButton.tsx      botão de submit com spinner + disabled via `isPending`
 │   ├── *.test.tsx            colocados, um por componente
 │   ├── inputs/               primitivas puras, sem react-hook-form
@@ -71,7 +73,7 @@ src/
 │   ├── index.ts
 │   └── README.md
 ├── config/                  variáveis de ambiente, validadas na carga
-│   ├── env.ts               readApiBaseUrl() + API_BASE_URL — falha alto se faltar
+│   ├── env.ts               readApiBaseUrl() + API_BASE_URL — falha alto se faltar ou, fora de dev, se não for https
 │   ├── env.test.ts          colocado
 │   ├── index.ts
 │   └── README.md
@@ -79,23 +81,27 @@ src/
 │   ├── classify.ts          ERROR_KINDS + classifyError/isRetryable/shouldRetry
 │   ├── copy.ts              mapa base + registro por módulo → a frase que o usuário lê
 │   ├── reporter.ts          o seam entre o QueryCache.onError e o provider do toast
+│   ├── queryClient.ts       createQueryClient() — a política do QueryClient do app, com `meta` tipado
+│   ├── applyServerFieldErrors.ts  details[] de um ApiError → campos do react-hook-form
 │   ├── ErrorBoundary.tsx    a ÚNICA classe do código (React exige) + a tela de fallback
 │   ├── ErrorToast.tsx       context + provider + host, um slot só
 │   ├── useErrorToast.ts     { showError }
-│   ├── reporting.test.tsx   integração: query que falha chega ao toast
+│   ├── reporting.test.tsx   integração: query/mutation que falha chega (ou não) ao toast
+│   ├── *.test.ts(x)         colocados
 │   ├── index.ts
 │   └── README.md
 ├── lib/                      I/O sem React — nem hook, nem contexto, nem componente
-│   ├── api/                 pasta própria: 3 arquivos, mesmo critério que promove modules/auth/api/
+│   ├── api/                 pasta própria: interceptors, cliente e validação de resposta
 │   │   ├── client.ts        instância axios, wiring dos 2 interceptors, api (get/post/patch/delete)
 │   │   ├── requestInterceptor.ts   bearer token + configureAuthorization/getAuthorizationHandlers
 │   │   ├── responseInterceptor.ts  ApiError, API_ERROR_CODES, tradução de erro + retry de refresh
-│   │   └── client.test.ts   colocado — troca defaults.adapter para exercitar os interceptors
+│   │   ├── parseOrThrow.ts  valida a resposta contra um schema zod; drift vira ApiError
+│   │   └── *.test.ts        colocados — client.test.ts troca defaults.adapter para exercitar os interceptors
 │   ├── connectivity.ts      NetInfo → onlineManager: sem isso o RN "está sempre online"
 │   ├── index.ts             não reexporta a instância: de fora, só api
 │   └── README.md
 ├── screens/                 telas que não pertencem a nenhum módulo específico
-│   ├── HomeScreen.tsx       o shell logado — prova navegação + NativeWind + tokens de ponta a ponta
+│   ├── HomeScreen.tsx       o shell logado — leva à área de conta
 │   ├── SplashScreen.tsx     só durante o boot, enquanto o token guardado é verificado
 │   ├── index.ts
 │   └── README.md
@@ -103,21 +109,21 @@ src/
 │   ├── RootNavigator.tsx    splash enquanto a sessão é desconhecida, depois o NavigationContainer
 │   ├── RootStack.tsx        um Stack.Screen por módulo — renderiza só o lado que a sessão escolhe
 │   ├── RootNavigator.test.tsx  colocado — o gate nos três estados de sessão
-│   ├── AppStack.tsx         o shell logado — hoje só HomeScreen
+│   ├── AppStack.tsx         o shell logado — HomeScreen + o AccountStack do módulo auth
 │   ├── types.ts             RootStackParamList/AppStackParamList — a única declaração dos nomes de rota
 │   ├── index.ts
 │   └── README.md
 ├── modules/                  um módulo hoje: auth
 │   ├── auth/
-│   │   ├── api/             authApi.ts + schemas.ts (respostas da API) + testes colocados
-│   │   ├── hooks/           useAuth.ts
+│   │   ├── api/             authApi.ts (13 endpoints) + schemas.ts (respostas da API) + testes colocados
+│   │   ├── hooks/           useAuth, useAuthSession (boot/token/refresh), useAuthActions (o que se faz com a sessão), useSessions, useResendCooldown
 │   │   ├── context/         AuthContext.tsx — o context E o provider no mesmo arquivo + teste
-│   │   ├── navigation/      AuthStack.tsx, types.ts
-│   │   ├── screens/         SignInScreen.tsx, SignUpScreen.tsx + testes colocados
-│   │   ├── validations/     credentials.ts — schemas zod dos formulários + teste colocado
+│   │   ├── navigation/      AuthStack.tsx, AccountStack.tsx, types.ts
+│   │   ├── screens/         SignIn, SignUp, VerifyEmail, ForgotPassword, ResetPassword, Account, ChangePassword, Sessions, DeleteAccount + testes colocados
+│   │   ├── validations/     credentials, password, verification, policy — schemas zod dos formulários + testes colocados
+│   │   ├── utils/           session.ts (resolveStatus, isEndedSession), singleFlight.ts, formatSessionDate.ts + testes
 │   │   ├── storage.ts       keychain (expo-secure-store); storage.web.ts é o fallback web
-│   │   ├── errorCopy.ts     code da API → copy; a message da API nunca vai para a tela
-│   │   ├── api/schemas.ts   schemas das RESPOSTAS da API — validação de formulário é validations/
+│   │   ├── errorCopy.ts     AUTH_ERROR_COPY: code da API → copy; a message da API nunca vai para a tela
 │   │   ├── constants.ts, types.ts, index.ts
 │   │   └── README.md
 │   └── README.md             convenção do formato de módulo
@@ -127,8 +133,8 @@ src/
 │   ├── index.ts              reexporta tokens + parsePixels() para o código do app
 │   └── README.md
 └── utils/                    helpers puros, sem React e sem I/O
-    ├── cn.ts                 clsx + tailwind-merge — merge de classNames condicional
-    ├── cn.test.ts            colocado
+    ├── classnames.ts         clsx + tailwind-merge — merge de classNames condicional
+    ├── classnames.test.ts    colocado
     ├── index.ts
     └── README.md
 ```
@@ -227,7 +233,7 @@ a N projetos derivados. Estas falham em `pnpm check`:
 | `bg-primary`, `text-content-muted` (semântico) | `bg-brand-500`, `text-neutral-900` (bruto) |
 | `import { X } from '@/theme'` | `import { X } from '../../theme'` |
 | `class ErrorBoundary extends Component` | Um boundary "funcional" — `getDerivedStateFromError` não existe como hook |
-| Dependência de app cravada em `~`/`^` (padrão Expo) | Editar manualmente uma versão fora do que `expo install` resolveria |
+| Versão exata no `package.json`, subida com `expo install` | Um `^`/`~` ou uma versão editada à mão fora do que `expo install` resolveria |
 
 ---
 
@@ -253,19 +259,22 @@ número que a API nativa espera.
 | `bg-primary` | `bg-brand-500` |
 | `border-border` | `border-neutral-200` |
 
-Dark mode e rebranding acontecem então num único lugar (`semanticColors`, em
-`tokens.js`) — nenhuma tela precisa ser tocada.
+Rebranding acontece então num único lugar (`semanticColors`, em `tokens.js`) —
+nenhuma tela precisa ser tocada. **Dark mode não está implementado:**
+`semanticColors` tem um valor só (claro) e o `app.json` fixa
+`"userInterfaceStyle": "light"`. Os alias semânticos são o que o tornaria uma
+mudança num lugar só, mas essa mudança ainda não foi feita.
 
-### `cn()` e a regra de estilização
+### `classnames()` e a regra de estilização
 
-`src/utils/cn.ts` combina `clsx` (junção condicional) com `tailwind-merge`
-(resolve conflito — `cn('p-2', 'p-4')` → `'p-4'`). É o que todo componente
+`src/utils/classnames.ts` combina `clsx` (junção condicional) com
+`tailwind-merge` (resolve conflito — `classnames('p-2', 'p-4')` → `'p-4'`). É o que todo componente
 que aceita uma prop `className` usa para deixar quem o consome ajustar layout
 sem `View`s extras.
 
 **Só classes NativeWind — nada de `StyleSheet.create` ou objeto de estilo
 inline**, a menos que uma API force isso. A única exceção hoje é
-`App.tsx:10`: `GestureHandlerRootView` precisa de um objeto de estilo real
+`ROOT_STYLE` em `App.tsx`: `GestureHandlerRootView` precisa de um objeto de estilo real
 porque o NativeWind não alcança essa prop —
 `const ROOT_STYLE = { flex: 1 } as const`, extraído para não repetir um
 objeto literal solto no JSX.
@@ -333,13 +342,13 @@ agora com código: `auth` é o primeiro módulo a ter seu próprio navigator.
 **Jest**, via preset `jest-expo`, mais **React Native Testing Library** para
 componentes.
 
-- Tests são **colocados** — `cn.ts` + `cn.test.ts`, nunca numa pasta
+- Tests são **colocados** — `classnames.ts` + `classnames.test.ts`, nunca numa pasta
   `__tests__/`. O sufixo `.test.ts`/`.test.tsx` não é só preferência de nome:
   é exatamente o que o override do Biome casa para isentar `noMagicNumbers`
   (§4) — um arquivo nomeado diferente (`.spec.tsx`, dentro de `__tests__/`)
   ainda roda como teste, mas perde a isenção em silêncio e quebra `pnpm lint`.
 - Lógica pura (`src/utils/`, hooks, lógica de módulo) usa Jest puro —
-  `describe`/`it`/`expect`, como em `cn.test.ts`.
+  `describe`/`it`/`expect`, como em `classnames.test.ts`.
 - Componentes e telas usam `@testing-library/react-native`, testando
   comportamento observável pelo usuário — texto renderizado, estado de
   acessibilidade, `fireEvent`. **Nunca** teste de snapshot. Na versão
@@ -379,12 +388,10 @@ pnpm test:ci               # jest --ci
 
 ## 9. Versões e decisões travadas
 
-**Dependências aqui usam `^`/`~`, não versão exata.** Diferente do repo da
-API — que pina tudo exato para eliminar divergência entre apps clonados —
-este repo segue o padrão do próprio Expo: a faixa `~57.x` acompanha o SDK
-testado em conjunto, e é o que `expo install` resolveria. Editar uma versão
-manualmente para fora dessa faixa é o que o `expo-doctor`/`expo install`
-existem para prevenir.
+**Dependências usam versão exata, sem `^`/`~`**, como no repo da API: pinar
+tudo elimina a divergência entre apps clonados. As versões do SDK são as que
+`expo install` resolve para o Expo 57 — para subir uma, use `expo install` em
+vez de editar o número à mão, que é o que o `expo-doctor` existe para pegar.
 
 **`pnpm-workspace.yaml`, não `.npmrc`.** O pnpm 11 deixou de ler `.npmrc`
 para essas chaves; é ali que moram:
@@ -455,13 +462,12 @@ arrow function e nenhum número mágico.
 Listado para não ser confundido com omissão, sem detalhar o que não foi
 construído:
 
-password reset ·
-verificação de e-mail · componente compartilhado em `src/components/` (vazio —
-nenhum segundo consumidor apareceu ainda) · `src/hooks/`, `src/store/`
+login com Google (`POST /auth/google`, adiado até o primeiro app se aproximar
+do release) · dark mode (§5) · `src/hooks/`, `src/store/`
 (criados só quando algo precisar deles, §1) · telemetria e crash reporting
 (nenhum sink: a camada de erros não reporta para lugar nenhum) · fila de toasts,
 swipe para dispensar e boundary por tela (§6 da spec da camada de erros) · flow
 de E2E · fronteira de módulo verificada por lint/dependency-cruiser
 (§2) · transporte por cookie no alvo web (o app pede sempre `refreshTransport:
-'body'`) · refresh proativo agendado pelo `exp` do JWT · listagem de sessões e
-revogação por aparelho (a API não expõe endpoint para enumerá-las).
+'body'`) · refresh proativo agendado pelo `exp` do JWT · encerrar uma sessão específica
+(a API só expõe a listagem, não a revogação por aparelho).

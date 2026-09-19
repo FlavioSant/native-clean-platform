@@ -10,7 +10,7 @@ próximo módulo deste repositório.
 Duas subpastas desde o primeiro export, não uma organização especulativa:
 `inputs/` e `forms/` são categorias genuinamente distintas (UI pura vs.
 integração com uma lib de formulário) — o oposto do "começa flat" que ainda
-vale para `modules/<m>/components/`. `FormErrorMessage` e `SubmitButton`
+vale para `modules/<m>/components/`. `FormErrorMessage`, `FormScreen` e `SubmitButton`
 ficam soltos na raiz pelo mesmo princípio invertido: nenhum dos dois forma
 uma categoria própria com só um export cada, então uma subpasta por
 componente seria a divisão especulativa que a regra evita.
@@ -20,12 +20,13 @@ componente seria a divisão especulativa que a regra evita.
 | Name | Description |
 | ---- | ------------- |
 | `FormErrorMessage` | Mensagem de erro de formulário: `message: string \| null`, não renderiza nada quando `null`. |
+| `FormScreen` | Raiz de tela com formulário: `KeyboardAvoidingView` + `ScrollView` com `keyboardShouldPersistTaps="handled"`, conteúdo centralizado enquanto cabe. |
 | `SubmitButton` | Botão de submit com estado de pending: troca o label por um spinner e desabilita via `isPending`. |
 | `TextInput` | Primitiva base: label, `value`/`onChangeText` controlados, `error?`, `className`. Aceita qualquer prop nativa de `TextInput` via passthrough. |
 | `EmailInput` | `TextInput` com teclado e autocomplete de e-mail fixados. |
 | `PasswordInput` | `TextInput` com `secureTextEntry` e `variant: 'current' \| 'new'` — só o `autoComplete` muda entre os dois. |
 | `CodeInput` | `TextInput` com teclado numérico e `one-time-code`; `digits` (o `maxLength`) vem de quem usa. |
-| `FormField` | Liga um `Controller` do react-hook-form à primitiva certa, escolhida por `type`. `inputProps` é o escape hatch pra um campo sem componente próprio (ex.: token de reset). |
+| `FormField` | Liga um `Controller` do react-hook-form à primitiva certa, escolhida por `type`. `inputProps` é o escape hatch pra um campo sem componente próprio (ex.: token de reset) — tipado com as props de `TextInput` menos as que o formulário controla (`value`, `onChangeText`, `onBlur`, `label`, `error`), e espalhado antes delas para não poder sobrescrevê-las. |
 
 ## Constants
 
@@ -54,3 +55,8 @@ componente seria a divisão especulativa que a regra evita.
   absorver em silêncio.
 - Os estilos de cada variante ficam em mapas indexados pela constante
   (`AUTO_COMPLETE_BY_VARIANT`), nunca em uma cadeia de ternários.
+- **Mensagem de erro é anunciada.** `FormErrorMessage` e o erro de campo do
+  `TextInput` têm `accessibilityRole="alert"` e `accessibilityLiveRegion`, para
+  que o leitor de tela fale o erro quando ele aparece.
+- **`FormScreen` no Android assume edge-to-edge** (o padrão do Expo atual) e usa
+  `behavior="padding"` nas duas plataformas. Não foi verificado em aparelho.

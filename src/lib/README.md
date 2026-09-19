@@ -25,7 +25,7 @@ se registra nele.
 | Name                    | Description                                                       |
 | ----------------------- | ------------------------------------------------------------------ |
 | `API_ERROR_CODES`       | Os códigos de erro da API, copiados do `api-clean-platform`, mais dois do próprio cliente (`NETWORK_ERROR`, `UNEXPECTED_RESPONSE`). Ver a nota sobre `EMAIL_ALREADY_IN_USE` em Conventions. |
-| `HTTP_METHODS`          | Métodos usados pelo app.                                           |
+| `UNAUTHORIZED_STATUS`   | `401` — o status que o cliente e o `classifyError` de `@/errors` comparam. |
 | `CLIENT_FAILURE_STATUS` | `0` — não houve status HTTP: a falha foi deste lado do fio.        |
 
 ## Types
@@ -35,7 +35,6 @@ se registra nele.
 | `ApiError`              | Erro com `status`, `code`, `details` e `traceId`.          |
 | `ValidationDetail`      | Um item de `details[]` numa resposta 400.                  |
 | `ErrorEnvelope`         | O formato de erro que a API sempre devolve.                |
-| `RequestOptions`        | `{ method?, body? }`.                                      |
 | `AuthorizationHandlers` | O par de callbacks que liga o cliente à sessão.            |
 
 ## Conventions
@@ -74,10 +73,15 @@ se registra nele.
   como logout.
 - **Nenhuma flag de opt-out por request é necessária**, e é a API que torna isso
   possível: `/auth/refresh` e `/auth/logout` falham com `INVALID_REFRESH_TOKEN`
-  e `/auth/login` com `INVALID_CREDENTIALS`, então só `/auth/me` e
-  `/auth/logout-all` produzem o código que dispara refresh — exatamente as duas
-  chamadas que vale repetir. A única guarda é contra loop: `hasRetriedAfterRefresh`
-  na config do axios.
+  e `/auth/login` com `INVALID_CREDENTIALS`, então só as rotas autenticadas
+  (`/auth/me`, `/auth/sessions`, `/auth/password`, `DELETE /auth/me`,
+  `/auth/logout-all`) produzem o código que dispara refresh — exatamente as
+  chamadas que vale repetir. A única guarda é contra loop:
+  `hasRetriedAfterRefresh` na config do axios.
+- **Só falha do axios vira `ApiError`.** Qualquer outra coisa que chegue ao
+  interceptor de resposta (um `throw` num interceptor de request, por exemplo)
+  passa intacta: rotulá-la `NETWORK_ERROR` esconderia um bug atrás de um toast
+  de "sem conexão".
 - **Esta camada não sabe o que é refresh token.** Onde ele mora, o que
   `REFRESH_TOKEN_REUSED` significa e quais falhas encerram sessão são assunto de
   `src/modules/auth/`.
