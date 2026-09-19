@@ -169,10 +169,25 @@ de pending, então os dois saíram de `modules/auth/components/` junto com os
 inputs — não é mais o caso de "não há um argumento equivalente" que mantinha
 o `SubmitButton` para trás.
 
-**Sem lint nem dependency-cruiser checando isso hoje.** Diferente do repo da
-API, que já tem uma tabela de fronteira equivalente pronta para o dia em que
-o lint de fronteira entrar, aqui a regra é convenção pura, sustentada em
-review.
+**O Biome checa a parte que dá para checar**, com `style/noRestrictedImports`
+(`patterns`) e overrides no `biome.json`:
+
+- em qualquer arquivo, `@/modules/<m>/<qualquer coisa>` é erro — só o barrel
+  `@/modules/<m>` passa. Dentro do módulo os imports são relativos, então a
+  regra não os alcança;
+- `src/lib/**` não importa `react`, `react-native`, `@/components`, `@/errors`
+  nem módulo algum;
+- `src/errors/**` não importa módulo;
+- `src/modules/<m>/**` não importa `@/modules/**` — outro módulo, nem o próprio
+  pelo alias.
+
+**Limites, para não confundir com cobertura total.** O lint enxerga o alias
+`@/`, não um caminho relativo que escapa da pasta (`../../modules/x/...`) —
+esse continua sendo review, junto da regra de nunca escrever `../../`. E o
+último item é um override **por módulo**: um módulo novo precisa do seu
+próprio bloco em `biome.json`, senão nada impede que ele importe outro
+(`src/modules/README.md`). Não há dependency-cruiser; o Biome já resolve o que
+está escrito acima.
 
 `modules/<m>/components/` começa **flat** (um arquivo por componente).
 Subpastas por categoria só valem a pena quando categorias distintas ficam
@@ -212,12 +227,13 @@ a N projetos derivados. Estas falham em `pnpm check`:
 | Tipo em PascalCase; variável/const em `camelCase`, `PascalCase` ou `CONSTANT_CASE` | Biome `style/useNamingConvention`, com exceção em `src/theme/tokens.js` | ✅ `pnpm lint` |
 | Acesso indexado devolve `T \| undefined` | `tsconfig.json`: `noUncheckedIndexedAccess` | ✅ `pnpm typecheck` |
 | `@tailwind` não dispara at-rule desconhecida | Biome override `noUnknownAtRules: off` em `**/*.css` | ✅ evita falso positivo |
+| Fronteira entre módulos, `lib` sem React e `errors` sem módulo (§2) | Biome `style/noRestrictedImports` + overrides por pasta; só vê imports pelo alias `@/` | ✅ `pnpm lint` |
 
 **O que ainda depende só de revisão humana:**
 
 | Regra | Situação |
 |---|---|
-| Fronteira entre módulos (§2) | ⚠️ catch em review — nada de lint checa isso |
+| Fronteira entre módulos por caminho relativo (§2) | ⚠️ catch em review — o lint só enxerga o alias `@/` |
 | String mágica (Biome só cobre número) | ⚠️ catch em review |
 | Declaração de função nomeada (`function foo() {}`, em vez de expressão) | ⚠️ Biome cobre expressão, não declaração |
 | Ordenação de classes Tailwind | ⚠️ desligada de propósito — `useSortedClasses` ainda é *work in progress* e não entende os tokens semânticos (§5); revisitar quando a regra estabilizar |
@@ -466,7 +482,6 @@ do release) · dark mode (§5) · `src/hooks/`, `src/store/`
 (criados só quando algo precisar deles, §1) · telemetria e crash reporting
 (nenhum sink: a camada de erros não reporta para lugar nenhum) · fila de toasts,
 swipe para dispensar e boundary por tela (§6 da spec da camada de erros) · flow
-de E2E · fronteira de módulo verificada por lint/dependency-cruiser
-(§2) · transporte por cookie no alvo web (o app pede sempre `refreshTransport:
+de E2E · transporte por cookie no alvo web (o app pede sempre `refreshTransport:
 'body'`) · refresh proativo agendado pelo `exp` do JWT · encerrar uma sessão específica
 (a API só expõe a listagem, não a revogação por aparelho).

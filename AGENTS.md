@@ -181,7 +181,9 @@ Organised **by module, not by file type**. See
 
 - The `@/` alias points at `src/`. Never write `../../`.
 - Nothing imports a file inside a module — only what the module's `index.ts`
-  exports.
+  exports. Biome enforces this for the `@/` alias, and the boundaries of
+  `src/lib/` and `src/errors/` with it; a relative path that escapes a folder
+  is still a review catch. See [ARCHITECTURE.md](ARCHITECTURE.md), section 2.
 - A component moves out of `modules/<x>/` into `src/components/` only once a
   second module needs it — **unless** it is a design-system primitive every
   app cloned from this boilerplate is known in advance to need (the "second

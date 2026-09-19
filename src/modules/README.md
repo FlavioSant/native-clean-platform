@@ -31,6 +31,11 @@ modules/<name>/
 
 - Nada fora de um módulo importa um arquivo de dentro dele — só o que o
   `index.ts` exporta.
+- **O Biome barra o import profundo** (`@/modules/<m>/...` de qualquer lugar) e
+  o import de módulo dentro de módulo. A segunda regra é um override **por
+  módulo** em `biome.json`: ao criar um módulo, copie o bloco de
+  `src/modules/auth/**` para o novo. Sem isso o módulo novo fica sem a
+  checagem e nada avisa.
 - Módulos não importam uns aos outros. Código compartilhado sobe para
   `src/components/` ou para um novo módulo de topo (`src/hooks/`,
   `src/lib/`) criado quando for realmente necessário.

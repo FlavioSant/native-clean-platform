@@ -57,6 +57,17 @@
               }
             ]
           }
+        },
+        "noRestrictedImports": {
+          "level": "error",
+          "options": {
+            "patterns": [
+              {
+                "group": ["@/modules/*/**"],
+                "message": "Import a module through its index.ts, never a file inside it."
+              }
+            ]
+          }
         }
       },
       "nursery": {
@@ -143,6 +154,78 @@
                       "kind": "objectLiteralProperty"
                     },
                     "formats": ["CONSTANT_CASE", "camelCase", "PascalCase"]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/lib/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "react": "src/lib knows nothing about React.",
+                  "react-native": "src/lib knows nothing about React."
+                },
+                "patterns": [
+                  {
+                    "group": ["@/modules/**"],
+                    "message": "src/lib knows no module: a module registers with it, not the other way round."
+                  },
+                  {
+                    "group": ["@/errors", "@/errors/**"],
+                    "message": "src/errors may import src/lib, never the reverse."
+                  },
+                  {
+                    "group": ["@/components", "@/components/**"],
+                    "message": "src/lib knows nothing about React."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/errors/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["@/modules/**"],
+                    "message": "src/errors knows no module: a module registers its copy with it."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/modules/auth/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["@/modules/**"],
+                    "message": "A module never imports a module, itself included: inside a module use relative paths."
                   }
                 ]
               }
