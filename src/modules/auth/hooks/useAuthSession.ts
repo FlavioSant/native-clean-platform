@@ -40,6 +40,9 @@ export const useAuthSession = (): AuthSessionValue => {
   // The registered `getAccessToken` has to read the CURRENT token without the
   // effect below re-running on every change, so state and ref move together.
   const tokenRef = useRef<string | null>(null);
+  // Bumped by every `endSession`. A refresh that started under an earlier
+  // value belongs to a session the user has since ended, and must not revive it.
+  const sessionEpochRef = useRef(0);
 
   const applyToken = useCallback((next: string | null) => {
     tokenRef.current = next;
@@ -60,6 +63,7 @@ export const useAuthSession = (): AuthSessionValue => {
   });
 
   const endSession = useCallback(async () => {
+    sessionEpochRef.current += 1;
     applyToken(null);
     await clearRefreshToken();
     queryClient.removeQueries({ queryKey: AUTH_QUERY_KEYS.ME });
@@ -113,7 +117,13 @@ export const useAuthSession = (): AuthSessionValue => {
   const refreshAccessToken = useMemo(
     () =>
       createSingleFlight(async (): Promise<string | null> => {
+        const epoch = sessionEpochRef.current;
+        const isSuperseded = () => sessionEpochRef.current !== epoch;
         const stored = await readRefreshToken();
+
+        if (isSuperseded()) {
+          return null;
+        }
 
         if (stored === null) {
           await endSession();
@@ -124,7 +134,21 @@ export const useAuthSession = (): AuthSessionValue => {
         try {
           const tokens = await refreshSession(stored);
 
+          // Answered for a session that ended while the request was in flight.
+          // `null` is already the "session is over" answer callers understand.
+          if (isSuperseded()) {
+            return null;
+          }
+
           await adoptTokens(tokens);
+
+          // The keychain write above is itself an await, and a sign-out can land
+          // inside it and lose the race for the token it was clearing.
+          if (isSuperseded()) {
+            await endSession();
+
+            return null;
+          }
 
           return tokens.accessToken;
         } catch (error) {
@@ -132,6 +156,11 @@ export const useAuthSession = (): AuthSessionValue => {
           // and the session stays exactly as it was.
           if (!isEndedSession(error)) {
             throw error;
+          }
+
+          // A newer session must not be torn down for the death of an older one.
+          if (isSuperseded()) {
+            return null;
           }
 
           await endSession();

@@ -1,5 +1,5 @@
 import { onlineManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { Pressable, Text } from 'react-native';
 
 import { API_ERROR_CODES, ApiError } from '@/lib';
@@ -13,6 +13,7 @@ import {
   logoutEverywhere,
   refreshSession,
 } from '../api/authApi';
+import type { SessionTokens } from '../api/schemas';
 import { AUTH_QUERY_KEYS } from '../constants';
 import { useAuth } from '../hooks/useAuth';
 import { clearRefreshToken, readRefreshToken, writeRefreshToken } from '../storage';
@@ -435,6 +436,37 @@ describe('AuthProvider', () => {
     expect(await screen.findByText('status:signedOut')).toBeTruthy();
     expect(mockLogoutEverywhere).toHaveBeenCalledTimes(1);
     await expect(readRefreshToken()).resolves.toBeNull();
+  });
+
+  it('stays signed out when the user signs out while a refresh is still in flight', async () => {
+    await writeRefreshToken(REFRESH_TOKEN);
+    let resolveRefresh: (tokens: SessionTokens) => void = () => undefined;
+    mockRefreshSession.mockReturnValue(
+      new Promise<SessionTokens>((resolve) => {
+        resolveRefresh = resolve;
+      }),
+    );
+    mockLogout.mockResolvedValue(undefined);
+    mockFetchMe.mockResolvedValue(PROFILE);
+
+    await renderAuth();
+    await waitFor(() => {
+      expect(mockRefreshSession).toHaveBeenCalledTimes(1);
+    });
+    await fireEvent.press(screen.getByText(SIGN_OUT_LABEL));
+    await waitFor(async () => {
+      await expect(readRefreshToken()).resolves.toBeNull();
+    });
+
+    await act(async () => {
+      resolveRefresh(rotatedPair);
+    });
+
+    // The rotated pair belongs to a session the user already ended: writing it
+    // would sign them back in behind their own sign-out.
+    expect(await screen.findByText('status:signedOut')).toBeTruthy();
+    await expect(readRefreshToken()).resolves.toBeNull();
+    expect(mockFetchMe).not.toHaveBeenCalled();
   });
 
   it('keeps the session when signing out everywhere fails', async () => {
