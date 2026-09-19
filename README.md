@@ -126,7 +126,10 @@ mudança num lugar só, mas hoje só existe o valor claro.
 1. Substitua a escala `colors.brand` em `src/theme/tokens.js`.
 2. Revise `semanticColors` se a marca precisar de superfícies ou contraste diferentes.
 3. Para uma fonte customizada: carregue com `expo-font`, depois defina `typography.fontFamily.sans`.
-4. Atualize `name` e `slug` em `app.json`, e `name` em `package.json`.
+4. Atualize `name` e `slug` em `app.json`, e `name` em `package.json`. Defina
+   também `ios.bundleIdentifier`, `android.package` e `scheme` — o boilerplate
+   não traz valor nenhum de propósito (cada app tem o seu), e sem eles não há
+   build de release nem deep link.
 
 Nenhuma tela precisa ser tocada. O porquê de `tokens.js` ser CommonJS e a
 regra de estilização (só NativeWind, sem `StyleSheet`) estão detalhados em
