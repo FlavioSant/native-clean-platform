@@ -271,6 +271,40 @@ describe('AuthProvider', () => {
     await expect(readRefreshToken()).resolves.toBe(REFRESH_TOKEN);
   });
 
+  it('leaves no session behind when the profile cannot be fetched during sign-in', async () => {
+    mockLogin.mockResolvedValue({ accessToken: ACCESS_TOKEN, refreshToken: REFRESH_TOKEN });
+    // Reachable again on the second call: a session left half-open would use it
+    // to sign the user in behind the error the form just showed.
+    mockFetchMe.mockRejectedValueOnce(networkFailure()).mockResolvedValue(PROFILE);
+
+    await renderAuth();
+    await screen.findByText('status:signedOut');
+    await fireEvent.press(screen.getByText(SIGN_IN_LABEL));
+
+    await waitFor(async () => {
+      await expect(readRefreshToken()).resolves.toBeNull();
+    });
+    expect(screen.getByText('status:signedOut')).toBeTruthy();
+    expect(screen.getByText('user:none')).toBeTruthy();
+  });
+
+  it('keeps the session after a confirmed sign-up whose profile fetch failed, because the code is spent', async () => {
+    mockConfirmSignUp.mockResolvedValue({
+      accessToken: ACCESS_TOKEN,
+      refreshToken: REFRESH_TOKEN,
+    });
+    mockFetchMe.mockRejectedValueOnce(networkFailure()).mockResolvedValue(PROFILE);
+
+    await renderAuth();
+    await screen.findByText('status:signedOut');
+    await fireEvent.press(screen.getByText(CONFIRM_SIGN_UP_LABEL));
+
+    // Retrying the form would only fail: the account exists and the code is
+    // gone. So the tokens stay, and the session opens once the profile lands.
+    expect(await screen.findByText('status:signedIn')).toBeTruthy();
+    await expect(readRefreshToken()).resolves.toBe(REFRESH_TOKEN);
+  });
+
   it('confirms the sign-up, which creates the account and opens the session', async () => {
     mockConfirmSignUp.mockResolvedValue({
       accessToken: ACCESS_TOKEN,

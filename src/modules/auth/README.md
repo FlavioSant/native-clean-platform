@@ -233,6 +233,13 @@ flowchart TD
   novo pertence a uma sessão que o usuário já encerrou, e gravá-lo o logaria de
   novo às costas do próprio sign-out. A mesma checagem impede que um refresh
   antigo, ao falhar, derrube uma sessão **mais nova** aberta nesse intervalo.
+- **Um `signIn` que não consegue buscar o perfil não deixa sessão para trás.**
+  Se o `/auth/me` falha logo depois do login, o `signIn` desfaz a sessão local e
+  relança: sem isso a tela mostraria o erro e, quando a rede voltasse, a sessão
+  abriria por trás dele. O `confirmSignUp` **não** faz isso: o código de
+  verificação é de uso único, então desfazer deixaria o usuário num formulário
+  que não pode mais dar certo — ali os tokens ficam e a sessão abre quando o
+  perfil chegar.
 - **Um token que a API rejeitou é apagado; um token que falhou por rede não.**
   Estar offline no boot não é motivo para exigir a senha de novo no próximo.
 - **A `message` da API nunca vai para a tela.** A copy sai de `@/errors`,

@@ -54,9 +54,24 @@ export const useAuthActions = ({
   const establishSession = useCallback(
     async (credentials: Credentials) => {
       const signInResponse = await login(credentials);
-      await openSession(signInResponse);
+
+      try {
+        await openSession(signInResponse);
+      } catch (error) {
+        // The form is about to show this failure, so the session must not open
+        // behind it once the profile becomes reachable. Only here: a sign-up
+        // confirmation spends a single-use code, so undoing it would strand the
+        // user on a form that can no longer succeed.
+        try {
+          await endSession();
+        } catch {
+          // The failure the caller needs is the one above, not this one.
+        }
+
+        throw error;
+      }
     },
-    [openSession],
+    [openSession, endSession],
   );
 
   const signInMutation = useMutation({ mutationFn: establishSession });
