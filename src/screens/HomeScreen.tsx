@@ -10,10 +10,7 @@ const COPY = {
 
 type HomeScreenProps = NativeStackScreenProps<AppStackParamList, 'Home'>;
 
-/**
- * The sign-out actions moved to `AccountScreen`, which is where a user looks
- * for them. This screen keeps the way there and nothing else.
- */
+/** Only leads to `AccountScreen`, which is where the sign-out actions live. */
 export const HomeScreen = ({ navigation }: HomeScreenProps) => (
   <View className="flex-1 items-center justify-center gap-4 bg-background px-6">
     <Text className="text-2xl font-semibold text-content">{COPY.title}</Text>

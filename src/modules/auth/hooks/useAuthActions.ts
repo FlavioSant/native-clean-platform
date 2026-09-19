@@ -41,9 +41,8 @@ export interface AuthActionsValue {
  * directly, and putting them here would make `isSubmitting` mean four unrelated
  * things at once.
  *
- * Every mutation sets `networkMode: 'always'`: the app-wide default PAUSES a
- * mutation while the device is offline, which leaves a submit stuck forever
- * instead of failing where the form can show it.
+ * Mutations here run with `networkMode: 'always'` — the client default set by
+ * `createQueryClient` in `@/errors`, where the reason is written down.
  */
 export const useAuthActions = ({
   adoptTokens,
@@ -60,7 +59,7 @@ export const useAuthActions = ({
     [openSession],
   );
 
-  const signInMutation = useMutation({ mutationFn: establishSession, networkMode: 'always' });
+  const signInMutation = useMutation({ mutationFn: establishSession });
 
   const confirmSignUpMutation = useMutation({
     mutationFn: async ({ email, code, password }: ConfirmSignUpValues) => {
@@ -69,7 +68,6 @@ export const useAuthActions = ({
       const confirmSignUpResponse = await confirmSignUpRequest({ email, code, password });
       await openSession(confirmSignUpResponse);
     },
-    networkMode: 'always',
   });
 
   const changePasswordMutation = useMutation({
@@ -83,7 +81,6 @@ export const useAuthActions = ({
       // The revocation above changed what `/auth/sessions` answers.
       queryClient.invalidateQueries({ queryKey: AUTH_QUERY_KEYS.SESSIONS });
     },
-    networkMode: 'always',
   });
 
   const deleteAccountMutation = useMutation({
@@ -104,7 +101,6 @@ export const useAuthActions = ({
       await endSession();
       queryClient.clear();
     },
-    networkMode: 'always',
   });
 
   const signOutMutation = useMutation({
@@ -132,7 +128,6 @@ export const useAuthActions = ({
 
       queryClient.clear();
     },
-    networkMode: 'always',
   });
 
   const signOutEverywhereMutation = useMutation({
@@ -143,7 +138,6 @@ export const useAuthActions = ({
       await endSession();
       queryClient.clear();
     },
-    networkMode: 'always',
   });
 
   // Memoised so the provider's own `useMemo` has a stable dependency: a new

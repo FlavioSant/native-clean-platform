@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { queryOptions, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { reportError } from '@/errors';
@@ -14,6 +14,21 @@ import { createSingleFlight } from '../utils/singleFlight';
 
 /** A rejected token will be rejected again; retrying only delays the boot. */
 const ME_RETRY_COUNT = 0;
+
+/**
+ * Shared by the `meQuery` observer and the imperative fetch in `openSession`:
+ * each has its own defaults and would not inherit the other's options.
+ *
+ * `networkMode: 'always'` because the client default pauses a query while
+ * offline, so it never reaches isSuccess or isError. The boot gate below waits
+ * for one of those, and would trap the app on the splash screen for as long as
+ * the device stays offline.
+ */
+const meQueryOptions = queryOptions({
+  queryKey: AUTH_QUERY_KEYS.ME,
+  queryFn: fetchMe,
+  networkMode: 'always',
+});
 
 export interface AuthSessionValue {
   status: AuthStatus;
@@ -49,18 +64,7 @@ export const useAuthSession = (): AuthSessionValue => {
     setToken(next);
   }, []);
 
-  const meQuery = useQuery({
-    queryKey: AUTH_QUERY_KEYS.ME,
-    queryFn: fetchMe,
-    enabled: token !== null,
-    retry: ME_RETRY_COUNT,
-    // The app-wide default pauses a query while offline instead of running it,
-    // so it never reaches isSuccess or isError. The boot gate below waits for
-    // one of those, so a paused boot query would trap the app on the splash
-    // screen for as long as the device stays offline. The mutations need the
-    // same override, for the mirror reason on the mutation side.
-    networkMode: 'always',
-  });
+  const meQuery = useQuery({ ...meQueryOptions, enabled: token !== null, retry: ME_RETRY_COUNT });
 
   const endSession = useCallback(async () => {
     sessionEpochRef.current += 1;
@@ -88,18 +92,12 @@ export const useAuthSession = (): AuthSessionValue => {
   /**
    * `query`, not an invalidation: the user has to be in the cache before
    * this resolves, so the gate swaps in the same tick the screen stops
-   * submitting. `networkMode: 'always'` for the same reason as `meQuery` above —
-   * this imperative call has its own default and does not inherit the hook's
-   * option.
+   * submitting.
    */
   const openSession = useCallback(
     async (tokens: SessionTokens) => {
       await adoptTokens(tokens);
-      await queryClient.query({
-        queryKey: AUTH_QUERY_KEYS.ME,
-        queryFn: fetchMe,
-        networkMode: 'always',
-      });
+      await queryClient.query(meQueryOptions);
     },
     [adoptTokens, queryClient],
   );
@@ -243,8 +241,19 @@ export const useAuthSession = (): AuthSessionValue => {
   // token, though: being offline at launch is no reason to make the user type
   // their password again on the next one.
   useEffect(() => {
+    const endRejectedSession = async () => {
+      try {
+        await endSession();
+      } catch (error) {
+        // The in-memory session is already gone; only the keychain delete
+        // failed, and the next boot's refresh gets the same rejection and
+        // retries it. Nothing else is listening to this promise.
+        reportError(error);
+      }
+    };
+
     if (tokenRef.current !== null && isEndedSession(meQuery.error)) {
-      endSession();
+      endRejectedSession();
     }
   }, [meQuery.error, endSession]);
 

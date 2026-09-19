@@ -3,11 +3,10 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Pressable, Text, View } from 'react-native';
-import { FormErrorMessage, FormField, SubmitButton } from '@/components';
-import { copyForError } from '@/errors';
+import { Pressable, Text } from 'react-native';
+import { FormErrorMessage, FormField, FormScreen, SubmitButton } from '@/components';
+import { applyServerFieldErrors, copyForError } from '@/errors';
 import { startSignUp } from '../api/authApi';
-import { applyServerFieldErrors } from '../errorCopy';
 import type { AuthStackParamList } from '../navigation/types';
 import { type SignUpValues, signUpSchema } from '../validations';
 
@@ -40,9 +39,9 @@ export const SignUpScreen = ({ navigation }: SignUpScreenProps) => {
 
   const startSignUpMutation = useMutation({
     // Wrapped, not passed by reference: mutationFn would otherwise receive
-    // TanStack Query's own second argument.
+    // TanStack Query's own second argument — the same applies to every
+    // `useMutation` around an API function in this module.
     mutationFn: (email: string) => startSignUp(email),
-    networkMode: 'always',
   });
 
   const submit = handleSubmit(async ({ email }) => {
@@ -62,7 +61,7 @@ export const SignUpScreen = ({ navigation }: SignUpScreenProps) => {
   });
 
   return (
-    <View className="flex-1 justify-center bg-background px-6">
+    <FormScreen>
       <Text className="mb-1 text-2xl font-semibold text-content">{COPY.title}</Text>
       <Text className="mb-6 text-sm text-content-muted">{COPY.subtitle}</Text>
 
@@ -79,6 +78,6 @@ export const SignUpScreen = ({ navigation }: SignUpScreenProps) => {
       <Pressable className="mt-4 items-center" onPress={() => navigation.navigate('SignIn')}>
         <Text className="text-sm text-primary">{COPY.switchToSignIn}</Text>
       </Pressable>
-    </View>
+    </FormScreen>
   );
 };

@@ -2,10 +2,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Text, View } from 'react-native';
-import { FormErrorMessage, FormField, SubmitButton } from '@/components';
-import { copyForError } from '@/errors';
-import { applyServerFieldErrors } from '../errorCopy';
+import { Text } from 'react-native';
+import { FormErrorMessage, FormField, FormScreen, SubmitButton } from '@/components';
+import { applyServerFieldErrors, copyForError } from '@/errors';
 import { useAuth } from '../hooks/useAuth';
 import type { AccountStackParamList } from '../navigation/types';
 import { type ChangePasswordValues, changePasswordSchema, PASSWORD_HINT } from '../validations';
@@ -59,7 +58,7 @@ export const ChangePasswordScreen = ({ navigation }: ChangePasswordScreenProps) 
   });
 
   return (
-    <View className="flex-1 justify-center bg-background px-6">
+    <FormScreen>
       <Text className="mb-1 text-2xl font-semibold text-content">{COPY.title}</Text>
       <Text className="mb-6 text-sm text-content-muted">{COPY.subtitle}</Text>
 
@@ -86,6 +85,6 @@ export const ChangePasswordScreen = ({ navigation }: ChangePasswordScreenProps) 
       <FormErrorMessage message={formError} />
 
       <SubmitButton isPending={isSubmitting} label={COPY.submitLabel} onPress={submit} />
-    </View>
+    </FormScreen>
   );
 };

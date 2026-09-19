@@ -1,9 +1,16 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react-native';
 import type { PropsWithChildren } from 'react';
 
+import { createQueryClient } from '@/errors';
+
 import { fetchSessions } from '../api/authApi';
 import { useSessions } from './useSessions';
+
+const TEST_QUERY_DEFAULTS = {
+  queries: { retry: false, gcTime: Infinity },
+  mutations: { gcTime: Infinity },
+} as const;
 
 jest.mock('../api/authApi');
 
@@ -19,7 +26,7 @@ const SESSION = {
 };
 
 const renderUseSessions = async () => {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const queryClient = createQueryClient(TEST_QUERY_DEFAULTS);
   const wrapper = ({ children }: PropsWithChildren) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );

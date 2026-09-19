@@ -1,13 +1,18 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 
-import { registerErrorCopy, resetErrorCopy } from '@/errors';
+import { createQueryClient, registerErrorCopy, resetErrorCopy } from '@/errors';
 import { API_ERROR_CODES, ApiError } from '@/lib';
 
 import { resendVerificationCode } from '../api/authApi';
 import { AUTH_ERROR_COPY } from '../errorCopy';
 import { useAuth } from '../hooks/useAuth';
 import { VerifyEmailScreen } from './VerifyEmailScreen';
+
+const TEST_QUERY_DEFAULTS = {
+  queries: { retry: false, gcTime: Infinity },
+  mutations: { gcTime: Infinity },
+} as const;
 
 jest.mock('../hooks/useAuth');
 jest.mock('../api/authApi');
@@ -55,7 +60,7 @@ beforeEach(() => {
  */
 const renderScreen = async (params: { email?: string } | undefined) =>
   render(
-    <QueryClientProvider client={new QueryClient()}>
+    <QueryClientProvider client={createQueryClient(TEST_QUERY_DEFAULTS)}>
       <VerifyEmailScreen
         navigation={navigation as never}
         route={{ key: 'k', name: 'VerifyEmail', params } as never}

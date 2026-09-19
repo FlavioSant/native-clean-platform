@@ -1,16 +1,18 @@
-import { QueryCache, QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react-native';
-import { Text } from 'react-native';
+import { QueryClientProvider, useMutation, useQuery } from '@tanstack/react-query';
+import { fireEvent, render, screen } from '@testing-library/react-native';
+import type { ReactElement } from 'react';
+import { Pressable, Text } from 'react-native';
 import { type Metrics, SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { API_ERROR_CODES, ApiError } from '@/lib';
 
 import { resetErrorCopy } from './copy';
 import { ErrorToastProvider } from './ErrorToast';
-import { reportError } from './reporter';
+import { createQueryClient } from './queryClient';
 
 const OFFLINE_COPY = 'Could not reach the server. Check your connection.';
 const LOADING_TEXT = 'loading';
+const SUBMIT_TEXT = 'submit';
 
 const offlineError = new ApiError({
   status: 0,
@@ -45,28 +47,32 @@ const SilentQuery = () => {
   return <Text>{LOADING_TEXT}</Text>;
 };
 
-const renderApp = async (silent: boolean) => {
-  // Its own client, not App.tsx's: this proves the seam, not the composition
-  // root, and a shared client would carry cache between the two cases.
-  const queryClient = new QueryClient({
-    queryCache: new QueryCache({
-      onError: (error, query) => {
-        if (query.meta?.silent !== true) {
-          reportError(error);
-        }
-      },
-    }),
-    defaultOptions: { queries: { retry: false } },
+const MutationProbe = ({ toastOnError }: { toastOnError: boolean }) => {
+  const { mutate } = useMutation({
+    mutationFn: async () => Promise.reject(offlineError),
+    meta: { toastOnError },
   });
 
-  return render(
+  return (
+    <Pressable onPress={() => mutate()}>
+      <Text>{SUBMIT_TEXT}</Text>
+    </Pressable>
+  );
+};
+
+const renderApp = async (probe: ReactElement) =>
+  render(
     <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
-      <QueryClientProvider client={queryClient}>
-        <ErrorToastProvider>{silent ? <SilentQuery /> : <FailingQuery />}</ErrorToastProvider>
+      <QueryClientProvider
+        client={createQueryClient({
+          queries: { retry: false, gcTime: Infinity },
+          mutations: { gcTime: Infinity },
+        })}
+      >
+        <ErrorToastProvider>{probe}</ErrorToastProvider>
       </QueryClientProvider>
     </SafeAreaProvider>,
   );
-};
 
 beforeEach(() => {
   resetErrorCopy();
@@ -74,15 +80,33 @@ beforeEach(() => {
 
 describe('a failing query', () => {
   it('reaches the toast through the registered reporter', async () => {
-    await renderApp(false);
+    await renderApp(<FailingQuery />);
 
     expect(await screen.findByText(OFFLINE_COPY)).toBeTruthy();
   });
 
   it('stays silent when the query opted out with meta.silent', async () => {
-    await renderApp(true);
+    await renderApp(<SilentQuery />);
     await screen.findByText(LOADING_TEXT);
 
     expect(screen.queryByText(OFFLINE_COPY)).toBeNull();
+  });
+});
+
+describe('a failing mutation', () => {
+  it('stays silent by default, because its form renders the error inline', async () => {
+    await renderApp(<MutationProbe toastOnError={false} />);
+
+    await fireEvent.press(screen.getByText(SUBMIT_TEXT));
+
+    expect(screen.queryByText(OFFLINE_COPY)).toBeNull();
+  });
+
+  it('reaches the toast when it opted in with meta.toastOnError', async () => {
+    await renderApp(<MutationProbe toastOnError />);
+
+    await fireEvent.press(screen.getByText(SUBMIT_TEXT));
+
+    expect(await screen.findByText(OFFLINE_COPY)).toBeTruthy();
   });
 });

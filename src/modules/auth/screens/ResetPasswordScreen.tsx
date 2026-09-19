@@ -3,11 +3,10 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Pressable, Text, View } from 'react-native';
-import { FormErrorMessage, FormField, SubmitButton } from '@/components';
-import { copyForError } from '@/errors';
+import { Pressable, Text } from 'react-native';
+import { FormErrorMessage, FormField, FormScreen, SubmitButton } from '@/components';
+import { applyServerFieldErrors, copyForError } from '@/errors';
 import { resetPassword } from '../api/authApi';
-import { applyServerFieldErrors } from '../errorCopy';
 import type { AuthStackParamList } from '../navigation/types';
 import { PASSWORD_HINT, type ResetPasswordValues, resetPasswordSchema } from '../validations';
 
@@ -40,10 +39,7 @@ export const ResetPasswordScreen = ({ navigation, route }: ResetPasswordScreenPr
   });
 
   const resetPasswordMutation = useMutation({
-    // Wrapped, not passed by reference: mutationFn would otherwise receive
-    // TanStack Query's own second argument.
     mutationFn: (input: { token: string; newPassword: string }) => resetPassword(input),
-    networkMode: 'always',
   });
 
   const submit = handleSubmit(async ({ token, newPassword }) => {
@@ -64,7 +60,7 @@ export const ResetPasswordScreen = ({ navigation, route }: ResetPasswordScreenPr
   });
 
   return (
-    <View className="flex-1 justify-center bg-background px-6">
+    <FormScreen>
       <Text className="mb-1 text-2xl font-semibold text-content">{COPY.title}</Text>
       <Text className="mb-6 text-sm text-content-muted">{COPY.subtitle}</Text>
 
@@ -100,6 +96,6 @@ export const ResetPasswordScreen = ({ navigation, route }: ResetPasswordScreenPr
       <Pressable className="mt-4 items-center" onPress={() => navigation.navigate('SignIn')}>
         <Text className="text-sm text-primary">{COPY.backToSignIn}</Text>
       </Pressable>
-    </View>
+    </FormScreen>
   );
 };

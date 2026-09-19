@@ -1,12 +1,17 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
-import { registerErrorCopy, resetErrorCopy } from '@/errors';
+import { createQueryClient, registerErrorCopy, resetErrorCopy } from '@/errors';
 import { API_ERROR_CODES, ApiError } from '@/lib';
 
 import { requestPasswordReset } from '../api/authApi';
 import { AUTH_ERROR_COPY } from '../errorCopy';
 import { ForgotPasswordScreen } from './ForgotPasswordScreen';
+
+const TEST_QUERY_DEFAULTS = {
+  queries: { retry: false, gcTime: Infinity },
+  mutations: { gcTime: Infinity },
+} as const;
 
 jest.mock('../api/authApi');
 
@@ -30,7 +35,7 @@ beforeEach(() => {
 
 const renderScreen = async () =>
   render(
-    <QueryClientProvider client={new QueryClient()}>
+    <QueryClientProvider client={createQueryClient(TEST_QUERY_DEFAULTS)}>
       <ForgotPasswordScreen
         navigation={navigation as never}
         route={{ key: 'k', name: 'ForgotPassword' } as never}

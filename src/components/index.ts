@@ -1,4 +1,5 @@
 export { FormErrorMessage } from './FormErrorMessage';
+export { FormScreen } from './FormScreen';
 export { FORM_FIELD_TYPES, FormField, type FormFieldType } from './forms/FormField';
 export { CodeInput } from './inputs/CodeInput';
 export { EmailInput } from './inputs/EmailInput';

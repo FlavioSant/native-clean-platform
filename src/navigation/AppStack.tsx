@@ -1,7 +1,7 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { AccountStack } from '@/modules/auth';
-import { HomeScreen } from '@/screens/HomeScreen';
+import { HomeScreen } from '@/screens';
 
 import type { AppStackParamList } from './types';
 

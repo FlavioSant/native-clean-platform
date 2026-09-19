@@ -1,8 +1,12 @@
-import { onlineManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { onlineManager, type QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { Pressable, Text } from 'react-native';
 
+import { createQueryClient } from '@/errors';
 import { API_ERROR_CODES, ApiError } from '@/lib';
+// The registration the API client reads on a 401: reached directly because the
+// point is to drive the provider the way the client does.
+import { getAuthorizationHandlers } from '@/lib/api/requestInterceptor';
 import {
   changePassword,
   confirmSignUp,
@@ -18,6 +22,11 @@ import { AUTH_QUERY_KEYS } from '../constants';
 import { useAuth } from '../hooks/useAuth';
 import { clearRefreshToken, readRefreshToken, writeRefreshToken } from '../storage';
 import { AuthProvider } from './AuthContext';
+
+const TEST_QUERY_DEFAULTS = {
+  queries: { retry: false, gcTime: Infinity },
+  mutations: { gcTime: Infinity },
+} as const;
 
 jest.mock('../api/authApi');
 
@@ -149,9 +158,7 @@ const Probe = () => {
   );
 };
 
-const renderAuth = async (
-  queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } }),
-) =>
+const renderAuth = async (queryClient = createQueryClient(TEST_QUERY_DEFAULTS)) =>
   render(
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
@@ -215,7 +222,7 @@ describe('AuthProvider', () => {
         message: 'Invalid or expired refresh token',
       }),
     );
-    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const queryClient = createQueryClient(TEST_QUERY_DEFAULTS);
     queryClient.setQueryData(AUTH_QUERY_KEYS.SESSIONS, []);
 
     await renderAuth(queryClient);
@@ -323,7 +330,7 @@ describe('AuthProvider', () => {
       accessToken: ACCESS_TOKEN,
       refreshToken: REPLACEMENT_REFRESH_TOKEN,
     });
-    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const queryClient = createQueryClient(TEST_QUERY_DEFAULTS);
     queryClient.setQueryData(AUTH_QUERY_KEYS.SESSIONS, []);
     await givenSignedIn(queryClient);
 
@@ -467,6 +474,96 @@ describe('AuthProvider', () => {
     expect(await screen.findByText('status:signedOut')).toBeTruthy();
     await expect(readRefreshToken()).resolves.toBeNull();
     expect(mockFetchMe).not.toHaveBeenCalled();
+  });
+
+  it('ends the session when the API rejects the profile of the token that was just issued', async () => {
+    await writeRefreshToken(REFRESH_TOKEN);
+    mockRefreshSession.mockResolvedValue(rotatedPair);
+    mockFetchMe.mockRejectedValue(
+      new ApiError({
+        status: 401,
+        code: API_ERROR_CODES.INVALID_ACCESS_TOKEN,
+        message: 'never rendered',
+      }),
+    );
+
+    await renderAuth();
+
+    expect(await screen.findByText('status:signedOut')).toBeTruthy();
+    // A token the API rejects must not survive to the next launch.
+    await waitFor(async () => {
+      await expect(readRefreshToken()).resolves.toBeNull();
+    });
+  });
+
+  describe('when the API client asks for a refresh after a 401', () => {
+    const requireHandlers = () => {
+      const handlers = getAuthorizationHandlers();
+
+      if (handlers === null) {
+        throw new Error('The provider registered no authorization handlers.');
+      }
+
+      return handlers;
+    };
+
+    const requestRefresh = async () => {
+      let outcome: string | null = null;
+
+      await act(async () => {
+        outcome = await requireHandlers().refreshAccessToken();
+      });
+
+      return outcome;
+    };
+
+    it('spends the refresh token once, however many requests failed at the same time', async () => {
+      await givenSignedIn();
+      mockRefreshSession.mockClear();
+      mockRefreshSession.mockResolvedValue({
+        accessToken: 'the-next-access-token',
+        refreshToken: 'the-token-after-that',
+      });
+      const { refreshAccessToken } = requireHandlers();
+
+      let outcomes: (string | null)[] = [];
+
+      await act(async () => {
+        outcomes = await Promise.all([
+          refreshAccessToken(),
+          refreshAccessToken(),
+          refreshAccessToken(),
+        ]);
+      });
+
+      expect(mockRefreshSession).toHaveBeenCalledTimes(1);
+      expect(outcomes).toEqual(Array(3).fill('the-next-access-token'));
+      await expect(readRefreshToken()).resolves.toBe('the-token-after-that');
+    });
+
+    it('ends the session when there is no refresh token left to spend', async () => {
+      await givenSignedIn();
+      mockRefreshSession.mockClear();
+      await clearRefreshToken();
+
+      const outcome = await requestRefresh();
+
+      expect(outcome).toBeNull();
+      expect(mockRefreshSession).not.toHaveBeenCalled();
+      expect(await screen.findByText('status:signedOut')).toBeTruthy();
+    });
+
+    it('rejects, and keeps the session, when the refresh fails for a network reason', async () => {
+      await givenSignedIn();
+      mockRefreshSession.mockRejectedValue(networkFailure());
+
+      await expect(requestRefresh()).rejects.toMatchObject({
+        code: API_ERROR_CODES.NETWORK_ERROR,
+      });
+
+      expect(screen.getByText('status:signedIn')).toBeTruthy();
+      await expect(readRefreshToken()).resolves.toBe(ROTATED_REFRESH_TOKEN);
+    });
   });
 
   it('keeps the session when signing out everywhere fails', async () => {

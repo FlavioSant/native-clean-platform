@@ -2,10 +2,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Pressable, Text, View } from 'react-native';
-import { FormErrorMessage, FormField, SubmitButton } from '@/components';
-import { copyForError } from '@/errors';
-import { applyServerFieldErrors } from '../errorCopy';
+import { Pressable, Text } from 'react-native';
+import { FormErrorMessage, FormField, FormScreen, SubmitButton } from '@/components';
+import { applyServerFieldErrors, copyForError } from '@/errors';
 import { useAuth } from '../hooks/useAuth';
 import type { AuthStackParamList } from '../navigation/types';
 import { type Credentials, signInSchema } from '../validations';
@@ -53,7 +52,7 @@ export const SignInScreen = ({ navigation, route }: SignInScreenProps) => {
   });
 
   return (
-    <View className="flex-1 justify-center bg-background px-6">
+    <FormScreen>
       <Text className="mb-6 text-2xl font-semibold text-content">{COPY.title}</Text>
 
       <FormField control={control} label={COPY.emailLabel} name="email" type="email" />
@@ -79,6 +78,6 @@ export const SignInScreen = ({ navigation, route }: SignInScreenProps) => {
       <Pressable className="mt-4 items-center" onPress={() => navigation.navigate('VerifyEmail')}>
         <Text className="text-sm text-primary">{COPY.switchToVerifyEmail}</Text>
       </Pressable>
-    </View>
+    </FormScreen>
   );
 };
