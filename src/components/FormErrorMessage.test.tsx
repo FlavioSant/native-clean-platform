@@ -9,6 +9,12 @@ describe('FormErrorMessage', () => {
     expect(screen.getByText('Something went wrong')).toBeTruthy();
   });
 
+  it('announces the message to assistive technology as an alert', async () => {
+    await render(<FormErrorMessage message="Something went wrong" />);
+
+    expect(screen.getByRole('alert')).toBeTruthy();
+  });
+
   it('renders nothing when there is no message', async () => {
     await render(<FormErrorMessage message={null} />);
 

@@ -34,6 +34,14 @@ export const TextInput = ({
       value={value}
       {...inputProps}
     />
-    {error === undefined ? null : <Text className="mt-1 text-sm text-danger">{error}</Text>}
+    {error === undefined ? null : (
+      <Text
+        accessibilityLiveRegion="polite"
+        accessibilityRole="alert"
+        className="mt-1 text-sm text-danger"
+      >
+        {error}
+      </Text>
+    )}
   </View>
 );

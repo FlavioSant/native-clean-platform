@@ -3,7 +3,7 @@ import { type Control, Controller, type FieldValues, type Path } from 'react-hoo
 import { CodeInput } from '../inputs/CodeInput';
 import { EmailInput } from '../inputs/EmailInput';
 import { PASSWORD_VARIANTS, PasswordInput } from '../inputs/PasswordInput';
-import { TextInput } from '../inputs/TextInput';
+import { TextInput, type TextInputProps } from '../inputs/TextInput';
 
 export const FORM_FIELD_TYPES = {
   TEXT: 'text',
@@ -23,7 +23,8 @@ interface FormFieldProps<TValues extends FieldValues> {
   label: string;
   type: FormFieldType;
   digits?: number;
-  inputProps?: Record<string, unknown>;
+  /** Native props for a field with no component of its own. The form's bindings cannot be overridden. */
+  inputProps?: Omit<TextInputProps, 'label' | 'value' | 'onChangeText' | 'onBlur' | 'error'>;
 }
 
 export const FormField = <TValues extends FieldValues>({
@@ -39,12 +40,12 @@ export const FormField = <TValues extends FieldValues>({
     name={name}
     render={({ field: { onBlur, onChange, value }, fieldState: { error } }) => {
       const commonProps = {
+        ...inputProps,
         label,
         value: value ?? '',
         onChangeText: onChange,
         onBlur,
         error: error?.message,
-        ...inputProps,
       };
 
       switch (type) {

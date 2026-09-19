@@ -27,6 +27,12 @@ describe('TextInput', () => {
     expect(screen.getByText('Required')).toBeTruthy();
   });
 
+  it('announces the error to assistive technology as an alert', async () => {
+    await render(<TextInput error="Required" label={LABEL} onChangeText={jest.fn()} value="" />);
+
+    expect(screen.getByRole('alert')).toBeTruthy();
+  });
+
   it('shows no error text when none is given', async () => {
     await render(<TextInput label={LABEL} onChangeText={jest.fn()} value="" />);
 
