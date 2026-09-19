@@ -58,5 +58,8 @@ componente seria a divisão especulativa que a regra evita.
 - **Mensagem de erro é anunciada.** `FormErrorMessage` e o erro de campo do
   `TextInput` têm `accessibilityRole="alert"` e `accessibilityLiveRegion`, para
   que o leitor de tela fale o erro quando ele aparece.
-- **`FormScreen` no Android assume edge-to-edge** (o padrão do Expo atual) e usa
-  `behavior="padding"` nas duas plataformas. Não foi verificado em aparelho.
+- **`FormScreen` usa `behavior="padding"` nas duas plataformas.** O Android é
+  edge-to-edge (o padrão desde o SDK 54), onde a janela não redimensiona mais
+  para o teclado e o Expo manda usar `KeyboardAvoidingView` "como no iOS"; o
+  exemplo com `undefined` no Android do guia de teclado deles não trata
+  edge-to-edge. Conferido na documentação, **não em aparelho**.
