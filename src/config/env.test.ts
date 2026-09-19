@@ -24,4 +24,12 @@ describe('readApiBaseUrl', () => {
   it('rejects a value that is not an http URL', () => {
     expect(() => readApiBaseUrl('localhost:3000')).toThrow('EXPO_PUBLIC_API_URL');
   });
+
+  it('rejects a cleartext URL outside development', () => {
+    expect(() => readApiBaseUrl('http://api.example.com', false)).toThrow('https://');
+  });
+
+  it('accepts an https URL outside development', () => {
+    expect(readApiBaseUrl('https://api.example.com', false)).toBe('https://api.example.com');
+  });
 });

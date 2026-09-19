@@ -7,6 +7,7 @@ const API_BASE_URL_VARIABLE = 'EXPO_PUBLIC_API_URL';
  * this guard has to catch is exactly that mistake.
  */
 const HTTP_URL_PATTERN = /^https?:\/\/[^\s/]+(?:\/[^\s]*)?$/;
+const SECURE_URL_PATTERN = /^https:\/\//;
 const TRAILING_SLASH_PATTERN = /\/+$/;
 
 const INVALID_API_BASE_URL_MESSAGE =
@@ -14,15 +15,26 @@ const INVALID_API_BASE_URL_MESSAGE =
   'http://localhost:3000. Copy .env.example to .env and set it. An Android ' +
   'emulator reaches the host machine at 10.0.2.2, not localhost.';
 
+const INSECURE_API_BASE_URL_MESSAGE =
+  `${API_BASE_URL_VARIABLE} must use https:// outside development: a release ` +
+  'build would send credentials and refresh tokens in clear text.';
+
 /**
  * Split from the constant below so both failure modes are testable without
  * re-importing the module.
  */
-export const readApiBaseUrl = (rawValue: string | undefined): string => {
+export const readApiBaseUrl = (
+  rawValue: string | undefined,
+  isDevelopment: boolean = __DEV__,
+): string => {
   const value = rawValue?.trim() ?? '';
 
   if (!HTTP_URL_PATTERN.test(value)) {
     throw new Error(INVALID_API_BASE_URL_MESSAGE);
+  }
+
+  if (!isDevelopment && !SECURE_URL_PATTERN.test(value)) {
+    throw new Error(INSECURE_API_BASE_URL_MESSAGE);
   }
 
   return value.replace(TRAILING_SLASH_PATTERN, '');
