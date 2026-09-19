@@ -129,7 +129,6 @@ src/
 │   └── README.md             convenção do formato de módulo
 ├── theme/                    design tokens — fonte única da verdade
 │   ├── tokens.js             CommonJS: alimenta tailwind.config.js (Node) e o TS (via index.ts)
-│   ├── tokens.d.ts           tipagem do tokens.js
 │   ├── index.ts              reexporta tokens + parsePixels() para o código do app
 │   └── README.md
 └── utils/                    helpers puros, sem React e sem I/O
@@ -241,7 +240,7 @@ a N projetos derivados. Estas falham em `pnpm check`:
 
 `src/theme/tokens.js` é a **fonte única da verdade**, e é CommonJS de
 propósito: o mesmo arquivo alimenta `tailwind.config.js` (Node) e o código
-TypeScript, via `src/theme/index.ts` tipado por `tokens.d.ts` — um token
+TypeScript, via `src/theme/index.ts`, com os tipos inferidos do próprio arquivo — um token
 nunca diverge entre os dois lados.
 
 Os valores são strings CSS (`'16px'`), não números: o NativeWind compila

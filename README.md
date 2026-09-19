@@ -93,7 +93,7 @@ seção 2.
 
 `src/theme/tokens.js` é a **fonte única da verdade**. É CommonJS de propósito:
 o mesmo arquivo alimenta o `tailwind.config.js` (Node) e o código TypeScript
-(através de `src/theme/index.ts`, tipado por `tokens.d.ts`), então um token
+(através de `src/theme/index.ts`, com os tipos inferidos do próprio arquivo), então um token
 nunca diverge entre os dois.
 
 Os valores são strings CSS (`'16px'`) porque o NativeWind compila Tailwind

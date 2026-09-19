@@ -1,4 +1,5 @@
-export type { Tokens } from './tokens';
+/** Inferred from `tokens.js` itself, so a scale key that does not exist is a compile error. */
+export type Tokens = typeof import('./tokens');
 export { colors, radius, semanticColors, spacing, typography } from './tokens';
 
 /**

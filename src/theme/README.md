@@ -4,7 +4,11 @@ Design tokens para o app inteiro. `tokens.js` é a fonte única da verdade e é
 propositalmente CommonJS: o mesmo arquivo alimenta o `tailwind.config.js`
 (Node) e o código TypeScript, então um token nunca diverge entre os dois.
 
-`tokens.d.ts` tipa o arquivo JS; `index.ts` reexporta para o código do app.
+Não há `.d.ts` escrito à mão: o TypeScript infere os tipos do próprio
+`tokens.js` (`allowJs`), então um degrau de escala que não existe —
+`colors.brand[5000]`, `colors.success[100]` — é erro de compilação, e um
+tipo escrito à mão não tem como ficar defasado em relação ao arquivo.
+`index.ts` reexporta para o código do app.
 
 ## Constants
 
@@ -26,7 +30,7 @@ propositalmente CommonJS: o mesmo arquivo alimenta o `tailwind.config.js`
 
 | Name     | Description                        |
 | -------- | ------------------------------------ |
-| `Tokens` | Formato do objeto de tokens inteiro. |
+| `Tokens` | Formato do objeto de tokens inteiro, inferido de `tokens.js`. |
 
 ## Conventions
 

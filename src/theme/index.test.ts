@@ -1,4 +1,4 @@
-import { parsePixels } from './index';
+import { colors, parsePixels } from './index';
 
 describe('parsePixels', () => {
   it('converts a CSS pixel token into a plain number', () => {
@@ -15,5 +15,12 @@ describe('parsePixels', () => {
 
   it('returns NaN for a non-numeric string, matching Number.parseFloat', () => {
     expect(parsePixels('px')).toBeNaN();
+  });
+});
+
+describe('colors', () => {
+  it('rejects a scale step that does not exist, at compile time', () => {
+    // @ts-expect-error — 5000 is not a step of the brand scale
+    expect(colors.brand[5000]).toBeUndefined();
   });
 });
