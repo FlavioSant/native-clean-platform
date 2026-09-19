@@ -207,8 +207,9 @@ unless an API forces it (for example `contentContainerStyle` on a list, or the
 root `flex: 1` on `GestureHandlerRootView`).
 
 Prefer the semantic colour aliases (`bg-background`, `text-content-muted`,
-`bg-primary`) over raw scales (`bg-neutral-50`, `bg-brand-500`), so dark mode and
-rebranding stay in one place.
+`bg-primary`) over raw scales (`bg-neutral-50`, `bg-brand-500`), so rebranding
+stays in one place — and dark mode will, once it exists. It does not yet: see
+[ARCHITECTURE.md](ARCHITECTURE.md), section 5.
 
 ## 7. Tooling
 

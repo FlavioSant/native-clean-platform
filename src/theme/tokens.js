@@ -9,7 +9,7 @@
  * replace `colors.brand` and `typography.fontFamily`.
  */
 
-/** Colour scales. Keep the full 50→950 range so dark mode has contrast to work with. */
+/** Colour scales. Keep the full 50→950 range so a future dark mode has contrast to work with. */
 const colors = {
   // Primary brand colour. REPLACE THIS when cloning the boilerplate.
   brand: {
@@ -47,8 +47,8 @@ const colors = {
 
 /**
  * Semantic aliases. Prefer these in screens (`bg-surface`, `text-content-muted`)
- * over raw colours (`bg-neutral-100`): it keeps dark mode and rebranding in one
- * place.
+ * over raw colours (`bg-neutral-100`): it keeps rebranding in one place, and a
+ * future dark mode (not implemented yet) would live here too.
  */
 const semanticColors = {
   background: colors.neutral[50],

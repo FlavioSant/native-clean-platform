@@ -40,8 +40,9 @@ tipo escrito à mão não tem como ficar defasado em relação ao arquivo.
 - As telas usam classes Tailwind, não estes exports. Importe daqui só quando
   uma API não passa pelo NativeWind — uma cor de `ActivityIndicator`, uma lib
   de gráficos.
-- Prefira `semanticColors` a `colors` para que dark mode e rebranding fiquem
-  em um único lugar.
+- Prefira `semanticColors` a `colors` para que o rebranding fique em um único
+  lugar — e o dark mode também ficará, quando existir. Hoje **não existe**: só
+  há o valor claro (ver `ARCHITECTURE.md`, seção 5).
 - Um alias com o mesmo nome de uma escala sombreia a escala inteira no Tailwind,
   porque o `tailwind.config.js` espalha `semanticColors` depois de `colors`. É o
   caso de `danger`: `bg-danger` e `bg-danger-surface` existem, `bg-danger-500`
