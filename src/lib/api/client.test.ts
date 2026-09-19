@@ -152,6 +152,17 @@ describe('api.get', () => {
   });
 });
 
+describe('a failure that did not come from axios', () => {
+  it('reaches the caller untouched instead of being labelled a network error', async () => {
+    const bug = new TypeError('a bug in an interceptor');
+    axiosInstance.defaults.adapter = async () => {
+      throw bug;
+    };
+
+    await expect(api.get(PATH)).rejects.toBe(bug);
+  });
+});
+
 describe('api.post', () => {
   it('serializes the body and sets the JSON content type', async () => {
     respondWith(OK_STATUS, {});

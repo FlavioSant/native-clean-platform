@@ -1,4 +1,4 @@
-import { API_ERROR_CODES, ApiError } from '@/lib';
+import { API_ERROR_CODES, ApiError, UNAUTHORIZED_STATUS } from '@/lib';
 
 export const ERROR_KINDS = {
   /** Never reached the API: offline, DNS, timeout. */
@@ -15,7 +15,6 @@ export const ERROR_KINDS = {
 
 export type ErrorKind = (typeof ERROR_KINDS)[keyof typeof ERROR_KINDS];
 
-const UNAUTHORIZED_STATUS = 401;
 const LOWEST_CLIENT_ERROR_STATUS = 400;
 const LOWEST_SERVER_ERROR_STATUS = 500;
 
@@ -77,6 +76,6 @@ const RETRYABLE_KINDS: readonly ErrorKind[] = [ERROR_KINDS.OFFLINE, ERROR_KINDS.
 export const isRetryable = (error: unknown): boolean =>
   RETRYABLE_KINDS.includes(classifyError(error));
 
-/** Shaped for TanStack Query's `retry` option. Queries only — see the plan. */
+/** Shaped for TanStack Query's `retry` option. Queries only: a mutation retried after an ambiguous failure could run twice. */
 export const shouldRetry = (failureCount: number, error: unknown): boolean =>
   failureCount < MAX_RETRY_ATTEMPTS && isRetryable(error);

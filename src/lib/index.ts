@@ -10,6 +10,7 @@ export {
   type ApiErrorCode,
   CLIENT_FAILURE_STATUS,
   type ErrorEnvelope,
+  UNAUTHORIZED_STATUS,
   type ValidationDetail,
 } from './api/responseInterceptor';
 export { startConnectivityWatch } from './connectivity';

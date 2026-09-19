@@ -1,8 +1,13 @@
-import type { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
+import {
+  type AxiosError,
+  type AxiosInstance,
+  type InternalAxiosRequestConfig,
+  isAxiosError,
+} from 'axios';
 
 import { getAuthorizationHandlers } from './requestInterceptor';
 
-const UNAUTHORIZED_STATUS = 401;
+export const UNAUTHORIZED_STATUS = 401;
 /** No HTTP status exists: the request failed on this side of the wire. */
 export const CLIENT_FAILURE_STATUS = 0;
 
@@ -177,7 +182,14 @@ const shouldAttemptRefresh = (error: ApiError, config: RetriableRequestConfig): 
  * `axiosInstance`, so importing it back here would cycle the two modules.
  */
 export const createResponseInterceptor = (axiosInstance: AxiosInstance) => {
-  return async (error: AxiosError) => {
+  return async (error: unknown) => {
+    // Only axios's own failures carry a response to read. Anything else — a
+    // throw from a request interceptor, say — is not a network problem, and
+    // labelling it one would hide a bug behind an "offline" toast.
+    if (!isAxiosError(error)) {
+      throw error;
+    }
+
     const apiError = toApiError(error);
     const config = error.config as RetriableRequestConfig | undefined;
     const handlers = getAuthorizationHandlers();
