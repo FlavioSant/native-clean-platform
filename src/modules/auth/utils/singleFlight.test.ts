@@ -69,4 +69,25 @@ describe('createSingleFlight', () => {
     expect(firstError).toBeInstanceOf(Error);
     expect(firstError).toBe(secondError);
   });
+
+  it('lets the next call run after a run that threw before returning a promise', async () => {
+    let calls = 0;
+    const flaky = jest.fn(() => {
+      calls += 1;
+
+      if (calls === 1) {
+        throw new Error(FAILURE_MESSAGE);
+      }
+
+      return Promise.resolve(SECOND_RESULT);
+    });
+    const run = createSingleFlight(flaky);
+
+    expect(() => run()).toThrow(FAILURE_MESSAGE);
+
+    // A cleanup that ran before the slot was assigned would leave the failed
+    // attempt in it, and this call would get that rejection back forever.
+    await expect(run()).resolves.toBe(SECOND_RESULT);
+    expect(flaky).toHaveBeenCalledTimes(2);
+  });
 });

@@ -18,6 +18,9 @@ export const createSingleFlight = <TResult>(
     // Assigned before returning, so a second caller in the same tick finds it.
     // Cleared when the run settles: this shares a run in progress, it does not
     // cache a result — and a refresh token is spent by the call that uses it.
+    // `.finally`, not an async wrapper with try/finally: if `run()` threw
+    // synchronously, the wrapper would clear the slot before it was assigned and
+    // leave it filled forever (`AGENTS.md`, rule 11).
     inFlight ??= run().finally(() => {
       inFlight = null;
     });

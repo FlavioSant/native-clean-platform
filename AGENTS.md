@@ -389,6 +389,25 @@ onPress={() => {
 }}
 ```
 
+### The one exception: `.finally()` as cleanup on a promise you return
+
+`async`/`await` with `try`/`catch`/`finally` stays the default everywhere,
+including the cleanup case. `.finally()` is allowed only when **all three**
+hold:
+
+- it is cleanup for a promise the function **returns**, not the handling of a
+  result or a rejection (that is still `await` + `try`/`catch`);
+- it lives in a helper, never in a handler, an effect or a component;
+- `try`/`finally` would change **when** the cleanup runs relative to the
+  function's own bookkeeping, and a comment at the call site says why.
+
+Today's only case is `createSingleFlight`
+(`src/modules/auth/utils/singleFlight.ts`): it stores the promise in
+`inFlight` right after starting it, and an `async` wrapper with `try`/`finally`
+would run the cleanup *before* that assignment when `run()` throws
+synchronously, leaving the slot filled forever. `.then()` and `.catch()` stay
+banned, exception or not.
+
 This is not machine-checked — hold the line in review, the same way
 [Rule 2](#2-arrow-functions-everywhere) holds the line on `function`
 declarations.
