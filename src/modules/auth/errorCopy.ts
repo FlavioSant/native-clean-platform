@@ -10,21 +10,13 @@ export const AUTH_ERROR_COPY = {
   [API_ERROR_CODES.INVALID_REFRESH_TOKEN]: 'Your session has expired. Please sign in again.',
   [API_ERROR_CODES.REFRESH_TOKEN_REUSED]:
     'Your session was ended for security. Please sign in again.',
-  /**
-   * One message for unknown, wrong, expired and attempts-exhausted, because the
-   * API answers one code for all four. Wording that guessed between them would
-   * hand back the oracle the API deliberately withheld.
-   */
+  /** One message for four failures: the API answers one code, and guessing between them would return the oracle it withheld. */
   [API_ERROR_CODES.EMAIL_VERIFICATION_FAILED]:
     'That code is not valid. Request a new one and try again.',
   /** Same reasoning: one code for unknown, wrong, expired and already used. */
   [API_ERROR_CODES.PASSWORD_RESET_FAILED]:
     'That token is not valid. Start the recovery again to get a new one.',
-  /**
-   * The account exists but is unverified. There is no route out of here in the
-   * app: the pending registration was consumed when the account was created, so
-   * `resend` would find nothing and `confirm` could never succeed. Copy only.
-   */
+  /** Copy only: no route out in the app (see "EMAIL_NOT_VERIFIED" in the module README). */
   [API_ERROR_CODES.EMAIL_NOT_VERIFIED]:
     'Confirm your email address before signing in. Check your inbox.',
   [API_ERROR_CODES.INVALID_CURRENT_PASSWORD]: 'That is not your current password.',

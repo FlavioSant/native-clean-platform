@@ -43,10 +43,8 @@ export interface AuthSessionValue {
 /**
  * Everything that decides whether there is a session: the token, the boot that
  * restores one, the single-flight refresh that keeps it, and the profile query
- * that says whether the token still verifies.
- *
- * Split from the provider so the mutations that USE a session live next to each
- * other in `useAuthActions` rather than inside the machinery that produces one.
+ * that says whether the token still verifies. What a user DOES with one is
+ * `useAuthActions`.
  */
 export const useAuthSession = (): AuthSessionValue => {
   const queryClient = useQueryClient();
@@ -103,14 +101,9 @@ export const useAuthSession = (): AuthSessionValue => {
   );
 
   /**
-   * The only place a refresh happens, and it happens once at a time — the API
-   * requires it: two concurrent refreshes of the same token return two tokens
-   * and only the last one issued stays valid.
-   *
-   * Its three answers are the contract `src/lib/api/responseInterceptor.ts`
-   * reads: a token means retry, `null` means the session is over AND has
-   * already been cleared here, and a rejection means the refresh itself
-   * failed with the session intact.
+   * The only place a refresh happens, once at a time (`createSingleFlight`: the
+   * API keeps only the last of two concurrent rotations). Its three answers are
+   * the `AuthorizationHandlers.refreshAccessToken` contract in `@/lib`.
    */
   const refreshAccessToken = useMemo(
     () =>

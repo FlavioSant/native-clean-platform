@@ -87,13 +87,9 @@ interface ChangePasswordInput {
 }
 
 /**
- * Step 1 of sign-up. Creates NO account — it records a pending registration and
- * emails a six-digit code.
- *
- * Answers 202 for a free address, for one already registering, and for one that
- * already has an account: the status cannot distinguish them, by design. What
- * differs is the email the address receives. Nothing to parse, and nothing a
- * caller may branch on.
+ * Step 1 of sign-up: records a pending registration and emails a six-digit code
+ * — creates NO account. Answers 202 for a free address, one already registering
+ * and one with an account alike, by design, so a caller must never branch on it.
  */
 export const startSignUp = async (email: string): Promise<void> => {
   await api.post('/auth/register', { email });
@@ -121,11 +117,7 @@ export const confirmSignUp = async (input: ConfirmSignUpInput): Promise<SessionT
   return parseOrThrow(sessionTokensSchema, payload);
 };
 
-/**
- * Starts password recovery. 202 whether or not the address has an account — an
- * address with none receives nothing at all. Nothing to parse, and no branch a
- * caller is allowed to take.
- */
+/** Starts password recovery. 202 whether or not the address has an account; same rule as `startSignUp`. */
 export const requestPasswordReset = async (email: string): Promise<void> => {
   await api.post('/auth/password/forgot', { email });
 };
@@ -154,11 +146,9 @@ export const changePassword = async (input: ChangePasswordInput): Promise<Sessio
 };
 
 /**
- * Deletes the authenticated account for good — the API has no grace period and
- * exports nothing first. Answers 204, so there is nothing to parse.
- *
- * The body is mandatory: the API rejects a DELETE with none as malformed. The
- * account id is never sent, because the API takes it from the bearer token.
+ * Deletes the authenticated account for good: no grace period, no export. The
+ * body is mandatory (the API rejects a DELETE with none as malformed), and the
+ * account id is never sent — the API takes it from the bearer token.
  */
 export const deleteAccount = async (input: DeleteAccountInput): Promise<void> => {
   await api.delete('/auth/me', input);
