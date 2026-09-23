@@ -37,3 +37,22 @@ jest.mock('expo-secure-store', () => {
     }),
   };
 });
+
+/**
+ * An in-memory AsyncStorage. Same reasoning as the SecureStore mock above: no
+ * native module under Jest, and an explicit mock also lets a test assert what
+ * was actually stored.
+ */
+jest.mock('@react-native-async-storage/async-storage', () => {
+  const store = new Map<string, string>();
+
+  return {
+    getItem: jest.fn(async (key: string) => store.get(key) ?? null),
+    setItem: jest.fn(async (key: string, value: string) => {
+      store.set(key, value);
+    }),
+    removeItem: jest.fn(async (key: string) => {
+      store.delete(key);
+    }),
+  };
+});
