@@ -69,6 +69,28 @@ const semanticColors = {
 };
 
 /**
+ * Dark values for the same aliases, mapped by hand rather than inverted
+ * mechanically — see decision D5 in
+ * docs/superpowers/specs/2026-09-22-dark-mode-design.md for why
+ * `content-inverse` stays unchanged and `danger-surface` reuses a neutral
+ * step instead of a colour the `danger` scale does not have.
+ */
+const semanticColorsDark = {
+  background: colors.neutral[950],
+  surface: colors.neutral[900],
+  'surface-muted': colors.neutral[800],
+  border: colors.neutral[700],
+  'border-strong': colors.neutral[600],
+  content: colors.neutral[50],
+  'content-muted': colors.neutral[400],
+  'content-inverse': colors.neutral[0],
+  primary: colors.brand[400],
+  'primary-pressed': colors.brand[500],
+  danger: colors.danger[500],
+  'danger-surface': colors.neutral[800],
+};
+
+/**
  * Spacing on a 4pt grid. Values are CSS strings because NativeWind compiles
  * Tailwind to CSS before converting it to native styles.
  */
@@ -130,4 +152,4 @@ const radius = {
   full: '9999px',
 };
 
-module.exports = { colors, semanticColors, spacing, typography, radius };
+module.exports = { colors, semanticColors, semanticColorsDark, spacing, typography, radius };
