@@ -4,6 +4,16 @@ const { colors, semanticColors, spacing, typography, radius } = require('./src/t
 const compact = (obj) =>
   Object.fromEntries(Object.entries(obj).filter(([, value]) => value != null));
 
+/**
+ * Every semantic alias becomes a CSS variable reference instead of a literal
+ * value: `ThemeProvider` (`src/theme/ThemeProvider.tsx`) supplies the actual
+ * light/dark value at runtime via NativeWind's `vars()`. See decision D1 in
+ * docs/superpowers/specs/2026-09-22-dark-mode-design.md.
+ */
+const themeColorVars = Object.fromEntries(
+  Object.keys(semanticColors).map((key) => [key, `var(--color-${key})`]),
+);
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: ['./App.tsx', './src/**/*.{js,jsx,ts,tsx}'],
@@ -13,7 +23,7 @@ module.exports = {
     extend: {
       colors: {
         ...colors,
-        ...semanticColors,
+        ...themeColorVars,
       },
       spacing,
       borderRadius: radius,

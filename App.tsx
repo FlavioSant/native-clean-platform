@@ -9,6 +9,7 @@ import { createQueryClient, ErrorBoundary, ErrorToastProvider, registerErrorCopy
 import { startConnectivityWatch } from '@/lib';
 import { AUTH_ERROR_COPY, AuthProvider } from '@/modules/auth';
 import { RootNavigator } from '@/navigation';
+import { ThemeProvider } from '@/theme';
 
 /** `GestureHandlerRootView` needs a real style object — NativeWind cannot reach it. */
 const ROOT_STYLE = { flex: 1 } as const;
@@ -23,18 +24,20 @@ const queryClient = createQueryClient();
 
 const App = () => (
   <GestureHandlerRootView style={ROOT_STYLE}>
-    <QueryClientProvider client={queryClient}>
-      <SafeAreaProvider>
-        <StatusBar style={STATUS_BAR_STYLE} />
-        <ErrorBoundary>
-          <ErrorToastProvider>
-            <AuthProvider>
-              <RootNavigator />
-            </AuthProvider>
-          </ErrorToastProvider>
-        </ErrorBoundary>
-      </SafeAreaProvider>
-    </QueryClientProvider>
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <SafeAreaProvider>
+          <StatusBar style={STATUS_BAR_STYLE} />
+          <ErrorBoundary>
+            <ErrorToastProvider>
+              <AuthProvider>
+                <RootNavigator />
+              </AuthProvider>
+            </ErrorToastProvider>
+          </ErrorBoundary>
+        </SafeAreaProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   </GestureHandlerRootView>
 );
 
