@@ -101,9 +101,11 @@ para CSS antes de converter para estilos nativos. Para usar um token fora do
 Tailwind:
 
 ```ts
-import { colors, parsePixels, spacing } from '@/theme';
+import { parsePixels, spacing, useThemeColors } from '@/theme';
 
-<ActivityIndicator color={colors.brand[500]} size={parsePixels(spacing[6])} />;
+const theme = useThemeColors();
+
+<ActivityIndicator color={theme.primary} size={parsePixels(spacing[6])} />;
 ```
 
 ### Cores brutas vs. semânticas
@@ -117,14 +119,16 @@ Prefira os aliases semânticos nas telas:
 | `bg-primary`                         | `bg-brand-500`       |
 | `border-border`                      | `border-neutral-200` |
 
-Rebranding acontece então em um único lugar (`semanticColors`). Dark mode
-**não está implementado ainda**: os aliases semânticos são o que o tornaria uma
-mudança num lugar só, mas hoje só existe o valor claro.
+Rebranding e dark mode acontecem então em um único lugar
+(`semanticColors`/`semanticColorsDark`) — nenhuma tela precisa ser tocada. O
+app segue o tema do sistema por padrão, com um override manual salvo pelo
+usuário. Ver [ARCHITECTURE.md](ARCHITECTURE.md), seção 5.
 
 ### Adaptando para um novo app
 
 1. Substitua a escala `colors.brand` em `src/theme/tokens.js`.
-2. Revise `semanticColors` se a marca precisar de superfícies ou contraste diferentes.
+2. Revise `semanticColors` e `semanticColorsDark` se a marca precisar de
+   superfícies ou contraste diferentes nos dois temas.
 3. Para uma fonte customizada: carregue com `expo-font`, depois defina `typography.fontFamily.sans`.
 4. Atualize `name` e `slug` em `app.json`, e `name` em `package.json`. Defina
    também `ios.bundleIdentifier`, `android.package` e `scheme` — o boilerplate

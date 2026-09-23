@@ -274,11 +274,28 @@ número que a API nativa espera.
 | `bg-primary` | `bg-brand-500` |
 | `border-border` | `border-neutral-200` |
 
-Rebranding acontece então num único lugar (`semanticColors`, em `tokens.js`) —
-nenhuma tela precisa ser tocada. **Dark mode não está implementado:**
-`semanticColors` tem um valor só (claro) e o `app.json` fixa
-`"userInterfaceStyle": "light"`. Os alias semânticos são o que o tornaria uma
-mudança num lugar só, mas essa mudança ainda não foi feita.
+Rebranding acontece então num único lugar (`semanticColors`/`semanticColorsDark`,
+em `tokens.js`) — nenhuma tela precisa ser tocada.
+
+**Dark mode funciona por variáveis CSS aplicadas em runtime, não por classe
+`dark:` nem por CSS estático.** `tailwind.config.js` mapeia cada alias
+semântico para `var(--color-<alias>)`; `ThemeProvider`
+(`src/theme/ThemeProvider.tsx`), montado logo abaixo do
+`GestureHandlerRootView` em `App.tsx`, decide o valor de cada variável via
+`vars()` do NativeWind, escolhendo entre `semanticColors` e
+`semanticColorsDark` conforme o tema resolvido. As duas outras abordagens —
+CSS estático com `:root`/`.dark`, ou uma variante `dark:` em cada classe —
+foram descartadas: a primeira duplicaria os valores fora do `tokens.js`; a
+segunda exigiria tocar toda tela que usa um alias. Ver decisão D1 em
+[`docs/superpowers/specs/2026-09-22-dark-mode-design.md`](docs/superpowers/specs/2026-09-22-dark-mode-design.md).
+
+O usuário segue o sistema por padrão; `useThemePreference()`
+(`src/theme/useThemePreference.ts`) guarda um override manual
+(`'system' | 'light' | 'dark'`) no `AsyncStorage` e o aplica via
+`colorScheme.set()`, do próprio NativeWind. `app.json` usa
+`"userInterfaceStyle": "automatic"` — fixo em `"light"`, o sistema operacional
+nunca reportaria um tema escuro para o app, independente de qualquer coisa
+aqui.
 
 ### `classnames()` e a regra de estilização
 
@@ -478,7 +495,7 @@ Listado para não ser confundido com omissão, sem detalhar o que não foi
 construído:
 
 login com Google (`POST /auth/google`, adiado até o primeiro app se aproximar
-do release) · dark mode (§5) · `src/hooks/`, `src/store/`
+do release) · `src/hooks/`, `src/store/`
 (criados só quando algo precisar deles, §1) · telemetria e crash reporting
 (nenhum sink: a camada de erros não reporta para lugar nenhum) · fila de toasts,
 swipe para dispensar e boundary por tela (§6 da spec da camada de erros) · flow

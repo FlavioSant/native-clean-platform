@@ -208,8 +208,8 @@ root `flex: 1` on `GestureHandlerRootView`).
 
 Prefer the semantic colour aliases (`bg-background`, `text-content-muted`,
 `bg-primary`) over raw scales (`bg-neutral-50`, `bg-brand-500`), so rebranding
-stays in one place — and dark mode will, once it exists. It does not yet: see
-[ARCHITECTURE.md](ARCHITECTURE.md), section 5.
+and dark mode both stay in one place. See
+[ARCHITECTURE.md](ARCHITECTURE.md), section 5, for how dark mode is wired.
 
 ## 7. Tooling
 
