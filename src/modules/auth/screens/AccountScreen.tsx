@@ -2,6 +2,8 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Alert, Pressable, Text, View } from 'react-native';
 
 import { useErrorToast } from '@/errors';
+import { THEME_PREFERENCES, type ThemePreference, useThemePreference } from '@/theme';
+import { classnames } from '@/utils';
 
 import { useAuth } from '../hooks/useAuth';
 import type { AccountStackParamList } from '../navigation/types';
@@ -17,7 +19,17 @@ const COPY = {
   confirmMessage: 'Every device signed in to this account will be signed out.',
   confirmLabel: 'Sign out',
   cancelLabel: 'Cancel',
+  appearanceLabel: 'Appearance',
+  systemLabel: 'System',
+  lightLabel: 'Light',
+  darkLabel: 'Dark',
 } as const;
+
+const APPEARANCE_OPTIONS: readonly { value: ThemePreference; label: string }[] = [
+  { value: THEME_PREFERENCES.SYSTEM, label: COPY.systemLabel },
+  { value: THEME_PREFERENCES.LIGHT, label: COPY.lightLabel },
+  { value: THEME_PREFERENCES.DARK, label: COPY.darkLabel },
+];
 
 type AccountScreenProps = NativeStackScreenProps<AccountStackParamList, 'Account'>;
 
@@ -30,6 +42,7 @@ type AccountScreenProps = NativeStackScreenProps<AccountStackParamList, 'Account
 export const AccountScreen = ({ navigation }: AccountScreenProps) => {
   const { user, signOut, signOutEverywhere, isSigningOut } = useAuth();
   const { showError } = useErrorToast();
+  const { preference, setPreference } = useThemePreference();
 
   const handleSignOut = () => {
     // Cannot reject by construction: the mutation swallows every failure
@@ -63,6 +76,37 @@ export const AccountScreen = ({ navigation }: AccountScreenProps) => {
       <View>
         <Text className="text-sm text-content-muted">{COPY.emailLabel}</Text>
         <Text className="text-lg font-semibold text-content">{user?.email ?? ''}</Text>
+      </View>
+
+      <View>
+        <Text className="mb-2 text-sm text-content-muted">{COPY.appearanceLabel}</Text>
+        <View className="flex-row gap-2">
+          {APPEARANCE_OPTIONS.map((option) => {
+            const isSelected = preference === option.value;
+
+            return (
+              <Pressable
+                key={option.value}
+                accessibilityRole="button"
+                accessibilityState={{ selected: isSelected }}
+                className={classnames(
+                  'flex-1 items-center rounded-lg border px-3 py-2',
+                  isSelected ? 'border-primary bg-primary' : 'border-border',
+                )}
+                onPress={() => setPreference(option.value)}
+              >
+                <Text
+                  className={classnames(
+                    'text-sm font-semibold',
+                    isSelected ? 'text-content-inverse' : 'text-content',
+                  )}
+                >
+                  {option.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
       </View>
 
       <Pressable

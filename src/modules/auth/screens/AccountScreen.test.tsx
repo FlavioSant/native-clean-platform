@@ -2,15 +2,21 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react-nativ
 import { Alert } from 'react-native';
 
 import { useErrorToast } from '@/errors';
+import { THEME_PREFERENCES, useThemePreference } from '@/theme';
 
 import { useAuth } from '../hooks/useAuth';
 import { AccountScreen } from './AccountScreen';
 
 jest.mock('../hooks/useAuth');
 jest.mock('@/errors', () => ({ useErrorToast: jest.fn() }));
+jest.mock('@/theme', () => ({
+  ...jest.requireActual('@/theme'),
+  useThemePreference: jest.fn(),
+}));
 
 const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
 const mockUseErrorToast = useErrorToast as jest.MockedFunction<typeof useErrorToast>;
+const mockUseThemePreference = useThemePreference as jest.MockedFunction<typeof useThemePreference>;
 
 const BUTTON_ROLE = 'button';
 const VALID_EMAIL = 'user@example.com';
@@ -19,6 +25,8 @@ const SESSIONS_LABEL = 'Active sessions';
 const DELETE_ACCOUNT_LABEL = 'Delete account';
 const SIGN_OUT_LABEL = 'Sign out';
 const SIGN_OUT_EVERYWHERE_LABEL = 'Sign out everywhere';
+const SYSTEM_LABEL = 'System';
+const DARK_LABEL = 'Dark';
 /** The Alert's destructive button carries the same label as the plain sign-out one. */
 const CONFIRM_LABEL = 'Sign out';
 
@@ -32,6 +40,7 @@ const PROFILE = {
 const navigation = { navigate: jest.fn() };
 const mockSignOut = jest.fn(async () => undefined);
 const mockSignOutEverywhere = jest.fn(async () => undefined);
+const mockSetPreference = jest.fn();
 
 const changePasswordButton = () => screen.getByRole(BUTTON_ROLE, { name: CHANGE_PASSWORD_LABEL });
 const sessionsButton = () => screen.getByRole(BUTTON_ROLE, { name: SESSIONS_LABEL });
@@ -39,6 +48,7 @@ const deleteAccountButton = () => screen.getByRole(BUTTON_ROLE, { name: DELETE_A
 const signOutButton = () => screen.getByRole(BUTTON_ROLE, { name: SIGN_OUT_LABEL });
 const signOutEverywhereButton = () =>
   screen.getByRole(BUTTON_ROLE, { name: SIGN_OUT_EVERYWHERE_LABEL });
+const appearanceButton = (label: string) => screen.getByRole(BUTTON_ROLE, { name: label });
 
 /** Runs the destructive button of the last Alert the screen raised. */
 const confirmTheAlert = async () => {
@@ -76,6 +86,10 @@ beforeEach(() => {
   jest.clearAllMocks();
   jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
   mockUseErrorToast.mockReturnValue({ showError: jest.fn() });
+  mockUseThemePreference.mockReturnValue({
+    preference: THEME_PREFERENCES.SYSTEM,
+    setPreference: mockSetPreference,
+  });
   givenSession();
 });
 
@@ -154,5 +168,24 @@ describe('AccountScreen', () => {
     expect(deleteAccountButton()).toBeDisabled();
     expect(signOutButton()).toBeDisabled();
     expect(signOutEverywhereButton()).toBeDisabled();
+  });
+
+  it('marks the current preference as the selected appearance option', async () => {
+    mockUseThemePreference.mockReturnValue({
+      preference: THEME_PREFERENCES.DARK,
+      setPreference: mockSetPreference,
+    });
+
+    await renderScreen();
+
+    expect(appearanceButton(DARK_LABEL)).toBeSelected();
+    expect(appearanceButton(SYSTEM_LABEL)).not.toBeSelected();
+  });
+
+  it('sets the theme preference when an appearance option is pressed', async () => {
+    await renderScreen();
+    await fireEvent.press(appearanceButton(DARK_LABEL));
+
+    expect(mockSetPreference).toHaveBeenCalledWith(THEME_PREFERENCES.DARK);
   });
 });
