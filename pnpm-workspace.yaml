@@ -6,22 +6,22 @@ nodeLinker: hoisted
 enablePrePostScripts: true
 
 minimumReleaseAgeExclude:
-  - '@expo/cli@57.0.17 || 57.0.23'
+  - '@expo/cli@57.0.17 || 57.0.23 || 57.0.27'
   - '@expo/fingerprint@0.20.9'
   - '@expo/local-build-cache-provider@57.0.7'
   - '@expo/metro-config@57.0.9'
   - '@expo/prebuild-config@57.0.13'
-  - '@expo/router-server@57.0.7'
+  - '@expo/router-server@57.0.7 || 57.0.11'
   - expo-asset@57.0.13
   - expo-constants@57.0.13
   - expo-file-system@57.0.5
-  - expo-modules-core@57.0.12 || 57.0.17
-  - expo-modules-jsi@57.0.5 || 57.1.0
-  - expo@57.0.15 || 57.0.21
+  - expo-modules-core@57.0.12 || 57.0.17 || 57.0.19
+  - expo-modules-jsi@57.0.5 || 57.1.0 || 57.1.1
+  - expo@57.0.15 || 57.0.21 || 57.0.25
   - '@expo/metro-runtime@57.0.12'
   - expo-secure-store@57.0.3
   - '@expo/metro-file-map@57.0.3'
-  - babel-preset-expo@57.0.11
+  - babel-preset-expo@57.0.11 || 57.0.13
   - react-native-gesture-handler@2.33.0
 
 allowBuilds:
