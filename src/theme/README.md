@@ -48,28 +48,6 @@ tipo escrito à mão não tem como ficar defasado em relação ao arquivo.
 | `Tokens` | Formato do objeto de tokens inteiro, inferido de `tokens.js`. |
 | `ThemePreference` | União derivada de `THEME_PREFERENCES`. |
 
-## Conventions
-
-- Os valores são strings CSS (`'16px'`), não números: o NativeWind compila
-  Tailwind para CSS antes de converter para estilos nativos, e números soltos
-  não são CSS válido.
-- As telas usam classes Tailwind, não estes exports. Importe daqui só quando
-  uma API não passa pelo NativeWind — uma cor de `ActivityIndicator`, uma lib
-  de gráficos.
-- **Dark mode funciona através de variáveis CSS aplicadas em runtime**, não de
-  um arquivo `.css` estático nem de classes `dark:` espalhadas pelas telas —
-  ver decisão D1 em
-  [`docs/superpowers/specs/2026-09-22-dark-mode-design.md`](../../docs/superpowers/specs/2026-09-22-dark-mode-design.md).
-  `tailwind.config.js` mapeia cada alias semântico para `var(--color-<alias>)`;
-  o `ThemeProvider` é quem decide o valor de cada variável, lendo
-  `semanticColors` ou `semanticColorsDark` conforme o tema ativo. Uma tela que
-  já usa `bg-background`/`text-content`/`bg-primary` não precisa de nenhuma
-  mudança para funcionar nos dois temas.
-- Um alias com o mesmo nome de uma escala sombreia a escala inteira no Tailwind,
-  porque o `tailwind.config.js` espalha `semanticColors` depois de `colors`. É o
-  caso de `danger`: `bg-danger` e `bg-danger-surface` existem, `bg-danger-500`
-  não. Escolha o nome do alias com isso em mente.
-
 ## Adapting to a new app
 
 1. Substitua a escala `colors.brand`.

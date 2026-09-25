@@ -42,33 +42,3 @@ componente seria a divisão especulativa que a regra evita.
 | `PasswordVariant` | União derivada de `PASSWORD_VARIANTS`. |
 | `FormFieldType` | União derivada de `FORM_FIELD_TYPES`. |
 | `TextInputProps` | Props do `TextInput`, incluindo o passthrough de props nativas. |
-
-## Conventions
-
-- **`inputs/` não sabe que react-hook-form existe.** Só `FormField`
-  (`forms/`) importa a lib — uma primitiva com RHF embutido não serviria a um
-  campo fora de um form (ex.: uma busca com estado local).
-- **`type` e `variant` são passados como literal, não como a constante** —
-  `<FormField type="password">`, não `type={FORM_FIELD_TYPES.PASSWORD}`. Os
-  dois já são tipados com a union derivada da constante, então o `tsc` recusa
-  um valor fora dela na hora — a mesma proteção que nome de rota já tem. A
-  constante segue existindo pra quem lê o valor de volta (o `switch` dentro do
-  `FormField`), só não pra quem está só autorando o valor num prop já tipado.
-- **`label` continua vindo de um `COPY`**, ao contrário de `type`/`variant`:
-  copy voltada ao usuário não tem union do `tsc` te protegendo, então a Rule 4
-  do `AGENTS.md` vale sem exceção aqui.
-- **`FormField.digits` é obrigatório só quando `type` é `code`**, e a
-  violação lança em vez de assumir um valor — um campo de código sem
-  `digits` é um erro de uso do componente, não um estado que a UI deveria
-  absorver em silêncio.
-- Os estilos de cada variante ficam em mapas indexados pela constante
-  (`AUTO_COMPLETE_BY_VARIANT`), nunca em uma cadeia de ternários.
-- **Mensagem de erro é anunciada.** `FormErrorMessage` e o erro de campo do
-  `TextInput` têm `accessibilityRole="alert"` e `accessibilityLiveRegion`, para
-  que o leitor de tela fale o erro quando ele aparece.
-- **`FormScreen` usa `behavior="padding"` nas duas plataformas.** O Android é
-  edge-to-edge (o padrão desde o SDK 54), onde a janela não redimensiona mais
-  para o teclado e o Expo manda usar `KeyboardAvoidingView` "como no iOS"; o
-  exemplo com `undefined` no Android do guia de teclado deles não trata
-  edge-to-edge. Conferido na documentação e em aparelho (`VerifyEmailScreen`,
-  o formulário com mais campos).

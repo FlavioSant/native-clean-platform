@@ -45,51 +45,6 @@ a copy que o usuário lê, o error boundary de render e o toast global.
 | `ErrorReporter` | Formato de quem `configureErrorReporter` registra. |
 | `ErrorToastValue` | O que `useErrorToast()` devolve. |
 
-## Conventions
-
-- **`input` é qualquer 4xx que não seja erro de sessão**, e a ordem do teste
-  importa: senha errada também é 401, e classificá-la como sessão responderia o
-  erro mais comum do app com a copy mais genérica.
-- **Sessão é um conjunto de códigos, não um status.** `INVALID_ACCESS_TOKEN`,
-  `INVALID_REFRESH_TOKEN` e `REFRESH_TOKEN_REUSED` são os três 401 que
-  significam "a sessão acabou"; qualquer outro 401 é `input`. Antes dos
-  endpoints de refresh existirem só o primeiro era testado, e os outros dois
-  teriam caído no `>= 400` — respondendo uma sessão encerrada com "verifique os
-  campos acima".
-- **`TRANSACTION_CONFLICT` não precisou de classificação.** Ele chega com 503,
-  então o ramo `>= 500` já o torna `server` e portanto retryable; só ganhou
-  copy.
-- **Query mostra toast, mutation não.** Uma query de fundo não tem call site
-  para exibir a falha; um formulário já mostra o erro de submit inline, e
-  repetir em toast diria a mesma coisa duas vezes. Uma query sai da regra com
-  `meta: { silent: true }` (a `useSessions` usa, porque a tela desenha o erro
-  e o retry); uma mutation entra com `meta: { toastOnError: true }`. As duas
-  chaves são tipadas em `queryClient.ts` — um nome errado é erro de compilação.
-- **Mutation roda com `networkMode: 'always'`; query mantém o padrão.** O padrão
-  do TanStack PAUSA a mutation offline, e o submit ficaria pendurado para
-  sempre em vez de falhar onde o formulário consegue mostrar. Já uma query só
-  sai do padrão quando ela própria trava a UI se ficar pausada (`meQuery` do
-  boot e `useSessions`), então cada uma declara isso no seu lugar.
-- **`createQueryClient` é a única definição da política do cliente**: o
-  `App.tsx` e os testes constroem o mesmo objeto. Um teste que reimplementasse
-  o `onError` provaria a cópia, não o app. Nos testes, `overrides` desliga
-  `retry` e o `gcTime` de query **e de mutation** — cada um tem o seu timer, e
-  esquecer o das mutations deixa o Jest pendurado ao fim da execução.
-- **Erro de sessão nunca vira toast**, por nenhum caminho: o app já está levando
-  o usuário para o login, e uma mensagem vermelha junto lê como uma segunda
-  falha sem relação.
-- **O reporter é um ponto de registro, não leitura de context.** O
-  `QueryCache.onError` é configurado em escopo de módulo, onde context React não
-  existe — mesma costura que o `AuthProvider` usa com `configureAuthorization`.
-- **A copy de domínio é do módulo; o `App.tsx` registra.** Registrar como efeito
-  colateral de import dependeria da ordem dos imports e de o arquivo ser mesmo
-  importado — falha silenciosa e chata de testar. O preço é real: um módulo cuja
-  copy nunca foi registrada cai no texto genérico **em silêncio**, e é por isso
-  que os testes de tela do auth registram `AUTH_ERROR_COPY` no `beforeEach`.
-- **O `ErrorBoundary` é classe**, e é exceção nomeada à regra 2 do `AGENTS.md`:
-  `getDerivedStateFromError` não tem equivalente com hooks em nenhuma versão
-  lançada do React.
-
 ## Limites aceitos
 
 - **Um boundary só, na raiz.** Um crash de tela apaga o app inteiro, não só a

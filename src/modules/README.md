@@ -26,33 +26,3 @@ modules/<name>/
 | Name   | Description                                                          |
 | ------ | ---------------------------------------------------------------------- |
 | `auth` | Sessão do app: cadastro, login, restauração no boot, logout e o estado que a navegação consulta. |
-
-## Conventions
-
-- Nada fora de um módulo importa um arquivo de dentro dele — só o que o
-  `index.ts` exporta.
-- **O Biome barra o import profundo** (`@/modules/<m>/...` de qualquer lugar) e
-  o import de módulo dentro de módulo. A segunda regra é um override **por
-  módulo** em `biome.json`: ao criar um módulo, copie o bloco de
-  `src/modules/auth/**` para o novo. Sem isso o módulo novo fica sem a
-  checagem e nada avisa.
-- Módulos não importam uns aos outros. Código compartilhado sobe para
-  `src/components/` ou para um novo módulo de topo (`src/hooks/`,
-  `src/lib/`) criado quando for realmente necessário.
-- Um componente só sai de um módulo quando um **segundo** módulo precisa dele.
-- Um Context e o provider dele moram no **mesmo arquivo**, dentro de
-  `context/` — quem lê o context é só o hook, e quem preenche é só o provider.
-  Um segundo context do módulo ganha outro arquivo na mesma pasta.
-- `validations/` guarda os schemas dos **formulários** (zod, consumidos pelo
-  react-hook-form). Schema de resposta da API não é validação de formulário:
-  fica em `api/`, junto de quem parseia a resposta.
-- `components/` de um módulo começa flat (um arquivo por componente). Só vale
-  a pena introduzir subpastas por categoria (`ui/`, `layout/`, `feedback/` —
-  o mesmo padrão de `src/components/`) se o módulo crescer o bastante para
-  que categorias distintas fiquem visíveis ali dentro; não crie essa divisão
-  antecipadamente.
-- **`utils/` é para o módulo o que `src/utils/` é para o app: funções puras,
-  sem React e sem I/O** — não confundir com `src/lib/`, que é sobre I/O com o
-  mundo externo. Mesma regra de promoção das constantes: um helper nasce no
-  `utils/` do módulo e só sobe para `src/utils/` quando um **segundo** módulo
-  precisar dele.

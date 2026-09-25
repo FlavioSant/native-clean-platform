@@ -14,16 +14,3 @@ no código lê `process.env` diretamente.
 | Name                       | Description                                                    |
 | -------------------------- | -------------------------------------------------------------- |
 | `readApiBaseUrl(rawValue, isDevelopment?)` | Valida e normaliza a URL base. Fora de desenvolvimento (`__DEV__` por padrão) exige `https://`. Existe separada da constante para que os modos de falha sejam testáveis sem reimportar o módulo. |
-
-## Conventions
-
-- A variável é `EXPO_PUBLIC_API_URL`, definida em `.env` (copie de
-  `.env.example`). O prefixo `EXPO_PUBLIC_` é obrigatório: é o que faz o Expo
-  expô-la ao bundle do cliente.
-- `process.env.EXPO_PUBLIC_API_URL` precisa aparecer escrito por extenso. O
-  Babel só reescreve a expressão completa — desestruturar `process.env` antes
-  deixa o valor `undefined` em build de produção.
-- Emulador Android alcança a máquina host em `10.0.2.2`, não em `localhost`.
-- Fora de desenvolvimento a URL precisa ser `https://`: um build de release com
-  `http://` mandaria senha e refresh token em texto claro, e o app prefere
-  morrer no boot com a mensagem a fazer isso em silêncio.

@@ -61,9 +61,8 @@ the module exports and what each export is for.
 everything except code identifiers and folder/file names, which stay in
 English (they must match the actual code). This is the one carve-out from
 [Rule 1](#1-english-only). Section headings (`## Components`, `## Hooks`,
-`## Functions`, `## Constants`, `## Flow`, `## Conventions`) may stay in
-English too, since they are the structural labels a reader scans for across
-every module.
+`## Functions`, `## Constants`, `## Flow`) may stay in English too, since
+they are the structural labels a reader scans for across every module.
 
 ```md
 # <Module name>
@@ -84,9 +83,6 @@ One paragraph: what this module is responsible for, and what it is not.
 flowchart TD
   ...
 ```
-
-## Conventions
-Anything specific to this module.
 ```
 
 Omit sections that do not apply. **Update the README in the same change that

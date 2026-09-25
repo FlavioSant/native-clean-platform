@@ -9,19 +9,7 @@ importadas pelo stack.
 
 ## Components
 
-| Name         | Route             | Description                                              |
-| ------------ | ----------------- | ---------------------------------------------------------- |
-| `HomeScreen` | `Home` | Tela inicial. Leva à área de conta, que é onde vivem as saídas de sessão. |
-
-## Conventions
-
-- Texto voltado ao usuário vive em um objeto `COPY` no topo do arquivo, nunca
-  inline no JSX. Essa é a costura que o i18n vai substituir.
-- **As saídas de sessão não moram mais aqui.** Elas foram para a
-  `AccountScreen`, no módulo `auth`, junto com a troca de senha — é onde o
-  usuário procura por elas, e é onde a assimetria entre `signOut` e
-  `signOutEverywhere` está documentada.
-- Os botões são `Pressable` com classes NativeWind, e **não** o `SubmitButton`
-  de `src/components/`: este componente tem `isPending`, mas nenhuma tela
-  aqui submete um formulário — só navega, sem estado pendente para o botão
-  representar.
+| Name           | Route  | Description                                              |
+| -------------- | ------ | ---------------------------------------------------------- |
+| `HomeScreen`   | `Home` | Tela inicial. Leva à área de conta, que é onde vivem as saídas de sessão. |
+| `SplashScreen` | —      | Sem rota própria: o `RootNavigator` a renderiza direto, fora do `NavigationContainer`, enquanto a sessão do boot ainda é desconhecida. |

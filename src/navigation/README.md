@@ -22,28 +22,6 @@ Este módulo lista **módulos, não telas**: as telas de um módulo ficam no
 | `RootStackParamList` | Parâmetros das rotas de topo (`Auth`, `App`). Registrado globalmente para que `navigate()` seja tipado em todo lugar. |
 | `AppStackParamList`  | Parâmetros de cada rota em `AppStack`.                                |
 
-## Conventions
-
-- Nomes de rota são **literais**: `<Stack.Screen name="Home">` e
-  `navigation.navigate('Home')`. Não há objeto de constantes — a lista de
-  parâmetros em `types.ts` é a única declaração de cada nome, e o `tsc` recusa
-  qualquer nome que não esteja nela.
-- Adicionar uma tela significa duas edições **dentro do par do módulo dono
-  dela**: uma entrada na lista de parâmetros em `types.ts` e um `Stack.Screen`
-  no navigator. Esquecer a primeira quebra o build.
-- Nome de rota é PascalCase, por convenção do React Navigation. É por isso que
-  o `biome.json` libera `typeProperty` em PascalCase para `**/navigation/types.ts`.
-- `NavigatorScreenParams` é o que mantém um `navigate('App', { screen: 'Home' })`
-  tipado. Sem ele o `screen` aninhado não é verificado. A rota `Account` usa o
-  mesmo mecanismo: ela é o navigator inteiro do módulo `auth`, não uma tela.
-- **A área de conta é um módulo, não telas soltas.** `Account`,
-  `ChangePassword`, `Sessions` e `DeleteAccount` são do `auth` — mexem em credencial e sessão — então o
-  módulo exporta o `AccountStack` e o `AppStack` registra um `Stack.Screen` só,
-  com `headerShown: false` para o stack de dentro não empilhar um segundo
-  header. Registrar as telas direto aqui daria menos código e faria o
-  `src/navigation/` importar arquivos de dentro do módulo, que é exatamente a
-  fronteira que a regra 5 do `AGENTS.md` proíbe.
-
 ## Current state
 
 `RootNavigator` mostra o `SplashScreen` enquanto a sessão é desconhecida
