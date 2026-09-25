@@ -49,8 +49,7 @@ aparece como nó próprio, com a navegação real entre elas — inclusive a que
 `VerifyEmail`, `ChangePassword`, `DeleteAccount` e `Account` passam pelo
 `AuthProvider` via `useAuth()`; `SignUp`, `ForgotPassword` e `ResetPassword` não
 escrevem nem leem sessão, então chamam a API direto pela própria `useMutation`,
-e `Sessions` só lê, pela query de `useSessions` — a mesma distinção já descrita
-em prosa nas Conventions abaixo. Pra fora do módulo, o
+e `Sessions` só lê, pela query de `useSessions`. Pra fora do módulo, o
 diagrama cruza a fronteira em `lib/api` (onde o `AuthProvider` registra o
 bearer token via `configureAuthorization`), `navigation/RootStack` (que lê
 `status`) e `errors` (onde `App.tsx` registra `AUTH_ERROR_COPY`).

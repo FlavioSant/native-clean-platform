@@ -137,7 +137,10 @@ describe('RootNavigator', () => {
     await renderNavigator();
     await screen.findByText('Signed-in area');
     await fireEvent.press(screen.getByText('Account'));
-    await fireEvent.press(await screen.findByText('Sign out'));
+
+    const signOutButton = await screen.findByText('Sign out');
+
+    await fireEvent.press(signOutButton);
 
     expect(await screen.findByText('Welcome back')).toBeTruthy();
     expect(screen.queryByText('Signed-in area')).toBeNull();

@@ -24,7 +24,7 @@ se registra nele.
 
 | Name                    | Description                                                       |
 | ----------------------- | ------------------------------------------------------------------ |
-| `API_ERROR_CODES`       | Os códigos de erro da API, copiados do `api-clean-platform`, mais dois do próprio cliente (`NETWORK_ERROR`, `UNEXPECTED_RESPONSE`). Ver a nota sobre `EMAIL_ALREADY_IN_USE` em Conventions. |
+| `API_ERROR_CODES`       | Os códigos de erro da API, copiados do `api-clean-platform`, mais dois do próprio cliente (`NETWORK_ERROR`, `UNEXPECTED_RESPONSE`). |
 | `UNAUTHORIZED_STATUS`   | `401` — o status que o cliente e o `classifyError` de `@/errors` comparam. |
 | `CLIENT_FAILURE_STATUS` | `0` — não houve status HTTP: a falha foi deste lado do fio.        |
 
