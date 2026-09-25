@@ -5,6 +5,7 @@ node_modules/
 
 # Expo
 .expo/
+.eas/
 dist/
 web-build/
 expo-env.d.ts
@@ -12,11 +13,26 @@ expo-env.d.ts
 # Native
 .kotlin/
 *.orig.*
+
+# Native signing — a leaked keystore can no longer sign updates for an app
+# already published under it, so these never reach a remote, not even a private one.
 *.jks
+*.keystore
 *.p8
 *.p12
 *.key
+*.pem
+*.cer
+*.certSigningRequest
 *.mobileprovision
+*.provisionprofile
+# EAS reads this one from the project root and it holds the keystore passwords in plain text.
+/credentials.json
+
+# Native build artifacts
+*.apk
+*.aab
+*.ipa
 
 # Metro
 .metro-health-check*
@@ -25,14 +41,15 @@ expo-env.d.ts
 npm-debug.*
 yarn-debug.*
 yarn-error.*
+pnpm-debug.*
 
 # macOS
 .DS_Store
-*.pem
 
-# local env files
+# local env files — .env.example is the only one that belongs in the repo
 .env
-.env*.local
+.env.*
+!.env.example
 
 # typescript
 *.tsbuildinfo
