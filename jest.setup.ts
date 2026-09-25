@@ -28,6 +28,10 @@ jest.mock('expo-secure-store', () => {
   const store = new Map<string, string>();
 
   return {
+    // The real value is a native constant, absent without the native module.
+    // Any distinct value works: what a test asserts is that the write passes
+    // THIS constant and not the accessible-by-default one.
+    WHEN_UNLOCKED_THIS_DEVICE_ONLY: 'whenUnlockedThisDeviceOnly',
     getItemAsync: jest.fn(async (key: string) => store.get(key) ?? null),
     setItemAsync: jest.fn(async (key: string, value: string) => {
       store.set(key, value);
