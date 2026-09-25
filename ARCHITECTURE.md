@@ -229,6 +229,7 @@ a N projetos derivados. Estas falham em `pnpm check`:
 | Componente é sempre arrow function | Biome `nursery/useReactFunctionComponentDefinition` (`namedComponents: arrowFunction`) | ✅ `pnpm lint` |
 | Função-expressão é sempre arrow function, nunca `function (...) {}` | Biome `style/useArrowFunction` (regra estável do preset `recommended`) | ✅ `pnpm lint` |
 | Sem número mágico | Biome `style/noMagicNumbers`, com exceção em `**/*.test.ts`/`**/*.test.tsx` | ✅ `pnpm lint` |
+| Nenhum `console.*` — o jeito mais comum de um token acabar no logcat | Biome `suspicious/noConsole` | ✅ `pnpm lint` |
 | Tipo em PascalCase; variável/const em `camelCase`, `PascalCase` ou `CONSTANT_CASE` | Biome `style/useNamingConvention`, com exceção em `src/theme/tokens.js` | ✅ `pnpm lint` |
 | Acesso indexado devolve `T \| undefined` | `tsconfig.json`: `noUncheckedIndexedAccess` | ✅ `pnpm typecheck` |
 | `@tailwind` não dispara at-rule desconhecida | Biome override `noUnknownAtRules: off` em `**/*.css` | ✅ evita falso positivo |
