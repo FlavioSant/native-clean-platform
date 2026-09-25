@@ -37,6 +37,7 @@ export interface AuthSessionValue {
   adoptTokens: (tokens: SessionTokens) => Promise<void>;
   /** `adoptTokens`, then puts the profile in the cache before resolving. */
   openSession: (tokens: SessionTokens) => Promise<void>;
+  /** The one teardown: the access token, every cached query, and the stored token. */
   endSession: () => Promise<void>;
 }
 
@@ -67,11 +68,14 @@ export const useAuthSession = (): AuthSessionValue => {
   const endSession = useCallback(async () => {
     sessionEpochRef.current += 1;
     applyToken(null);
+    // The whole cache, not this module's two keys: every query in the app was
+    // answered for the user whose session just ended, and the next account to
+    // sign in on this device would otherwise read them until each refetch
+    // landed. Before the keychain delete, which is the one step here that can
+    // fail — an in-memory teardown that a failed delete could skip would be
+    // worse than the failure itself.
+    queryClient.clear();
     await clearRefreshToken();
-    queryClient.removeQueries({ queryKey: AUTH_QUERY_KEYS.ME });
-    // Not only the profile: the next account to sign in on this device would
-    // otherwise see this one's session list until its own refetch landed.
-    queryClient.removeQueries({ queryKey: AUTH_QUERY_KEYS.SESSIONS });
   }, [applyToken, queryClient]);
 
   /**

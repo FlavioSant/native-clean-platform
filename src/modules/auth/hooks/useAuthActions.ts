@@ -112,9 +112,9 @@ export const useAuthActions = ({
       }
 
       // No logout call: the deletion took every refresh token of the account
-      // with it, so there is nothing left on the server to revoke.
+      // with it, so there is nothing left on the server to revoke. `endSession`
+      // empties the query cache on its own.
       await endSession();
-      queryClient.clear();
     },
   });
 
@@ -137,11 +137,10 @@ export const useAuthActions = ({
       try {
         await endSession();
       } catch {
-        // Independent of the block above: the keychain delete can fail on
-        // its own and must not stop `queryClient.clear()` from running.
+        // Independent of the block above: the keychain delete can fail on its
+        // own, and this sign-out must still resolve. Everything in memory is
+        // already gone by then — `endSession` clears it before that delete.
       }
-
-      queryClient.clear();
     },
   });
 
@@ -151,7 +150,6 @@ export const useAuthActions = ({
       // survives, so the user can retry or use the plain sign-out.
       await logoutEverywhere();
       await endSession();
-      queryClient.clear();
     },
   });
 

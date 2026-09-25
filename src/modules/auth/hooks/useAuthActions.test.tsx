@@ -62,8 +62,7 @@ describe('signOut', () => {
   it('skips the logout call when there is no stored refresh token, but still ends the session', async () => {
     mockReadRefreshToken.mockResolvedValue(null);
     const endSession = jest.fn().mockResolvedValue(undefined);
-    const { result, queryClient } = await renderAuthActions(createSessionValue({ endSession }));
-    const clearSpy = jest.spyOn(queryClient, 'clear');
+    const { result } = await renderAuthActions(createSessionValue({ endSession }));
 
     await act(async () => {
       await result.current.signOut();
@@ -71,16 +70,16 @@ describe('signOut', () => {
 
     // Nothing was issued for this device, so there is nothing to revoke.
     expect(mockLogout).not.toHaveBeenCalled();
+    // The teardown itself — token, query cache, keychain — belongs to
+    // `endSession`, and useAuthSession.test.tsx is what asserts it.
     expect(endSession).toHaveBeenCalledTimes(1);
-    expect(clearSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('still clears the query cache and resolves when ending the session itself fails', async () => {
+  it('resolves even when ending the session itself fails', async () => {
     mockReadRefreshToken.mockResolvedValue(REFRESH_TOKEN);
     mockLogout.mockResolvedValue(undefined);
     const endSession = jest.fn().mockRejectedValue(new Error('keychain delete failed'));
-    const { result, queryClient } = await renderAuthActions(createSessionValue({ endSession }));
-    const clearSpy = jest.spyOn(queryClient, 'clear');
+    const { result } = await renderAuthActions(createSessionValue({ endSession }));
 
     // The whole mutation is documented as "nothing here may reject" — a
     // keychain delete failure must not surface to the caller.
@@ -88,7 +87,7 @@ describe('signOut', () => {
       await expect(result.current.signOut()).resolves.toBeUndefined();
     });
 
-    expect(clearSpy).toHaveBeenCalledTimes(1);
+    expect(endSession).toHaveBeenCalledTimes(1);
   });
 });
 

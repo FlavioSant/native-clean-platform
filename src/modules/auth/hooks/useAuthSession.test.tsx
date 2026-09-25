@@ -43,6 +43,10 @@ const mockWriteRefreshToken = writeRefreshToken as jest.MockedFunction<typeof wr
 const mockClearRefreshToken = clearRefreshToken as jest.MockedFunction<typeof clearRefreshToken>;
 const mockReportError = reportError as jest.MockedFunction<typeof reportError>;
 
+/** Stands in for any other module's cached data — this module has no say in it. */
+const FOREIGN_QUERY_KEY = ['invoices', 'list'] as const;
+const FOREIGN_DATA = [{ id: 'an-invoice' }];
+
 const ACCESS_TOKEN = 'a-signed-token';
 const REFRESH_TOKEN = 'a-refresh-token';
 const ROTATED_REFRESH_TOKEN = 'the-next-refresh-token';
@@ -396,9 +400,12 @@ describe('adoptTokens', () => {
 });
 
 describe('endSession', () => {
-  it('clears storage, resets the token, and empties the me and sessions caches', async () => {
+  it('clears storage, resets the token, and empties the whole query cache', async () => {
     const queryClient = createQueryClient(TEST_QUERY_DEFAULTS);
     queryClient.setQueryData(AUTH_QUERY_KEYS.SESSIONS, []);
+    // Another module's query: whatever it holds was answered for the session
+    // about to end, so it must not survive into the next account on this device.
+    queryClient.setQueryData(FOREIGN_QUERY_KEY, FOREIGN_DATA);
     const { result } = await renderUseAuthSession(queryClient);
     await waitFor(() => expect(result.current.status).toBe(AUTH_STATUSES.SIGNED_OUT));
 
@@ -415,6 +422,27 @@ describe('endSession', () => {
     expect(requireHandlers().getAccessToken()).toBeNull();
     expect(queryClient.getQueryData(AUTH_QUERY_KEYS.ME)).toBeUndefined();
     expect(queryClient.getQueryData(AUTH_QUERY_KEYS.SESSIONS)).toBeUndefined();
+    expect(queryClient.getQueryData(FOREIGN_QUERY_KEY)).toBeUndefined();
+  });
+
+  it('empties the cache even when the keychain delete fails', async () => {
+    const queryClient = createQueryClient(TEST_QUERY_DEFAULTS);
+    queryClient.setQueryData(FOREIGN_QUERY_KEY, FOREIGN_DATA);
+    const { result } = await renderUseAuthSession(queryClient);
+    await waitFor(() => expect(result.current.status).toBe(AUTH_STATUSES.SIGNED_OUT));
+
+    await act(async () => {
+      await result.current.adoptTokens({ accessToken: ACCESS_TOKEN, refreshToken: REFRESH_TOKEN });
+    });
+
+    mockClearRefreshToken.mockRejectedValueOnce(new Error('the keychain is unavailable'));
+
+    await act(async () => {
+      await expect(result.current.endSession()).rejects.toThrow();
+    });
+
+    expect(requireHandlers().getAccessToken()).toBeNull();
+    expect(queryClient.getQueryData(FOREIGN_QUERY_KEY)).toBeUndefined();
   });
 });
 
