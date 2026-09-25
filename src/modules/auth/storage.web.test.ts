@@ -1,5 +1,10 @@
 import { REFRESH_TOKEN_STORAGE_KEY } from './constants';
-import { clearRefreshToken, readRefreshToken, writeRefreshToken } from './storage.web';
+import {
+  assertWebStorageIsAllowed,
+  clearRefreshToken,
+  readRefreshToken,
+  writeRefreshToken,
+} from './storage.web';
 
 const TOKEN = 'stored-refresh-token';
 
@@ -44,5 +49,15 @@ describe('refresh token storage (web)', () => {
     await clearRefreshToken();
 
     await expect(readRefreshToken()).resolves.toBeNull();
+  });
+});
+
+describe('assertWebStorageIsAllowed', () => {
+  it('allows the development web target', () => {
+    expect(() => assertWebStorageIsAllowed(true)).not.toThrow();
+  });
+
+  it('refuses a release build, where localStorage would hold a real refresh token', () => {
+    expect(() => assertWebStorageIsAllowed(false)).toThrow('localStorage');
   });
 });

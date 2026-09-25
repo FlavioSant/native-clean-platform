@@ -505,5 +505,8 @@ do release) · `src/hooks/`, `src/store/`
 (nenhum sink: a camada de erros não reporta para lugar nenhum) · fila de toasts,
 swipe para dispensar e boundary por tela (§6 da spec da camada de erros) · flow
 de E2E · transporte por cookie no alvo web (o app pede sempre `refreshTransport:
-'body'`) · refresh proativo agendado pelo `exp` do JWT · encerrar uma sessão específica
-(a API só expõe a listagem, não a revogação por aparelho).
+'body'`, e sem cookie o `storage.web.ts` guarda o refresh token no `localStorage`
+— por isso ele aborta no boot fora de `__DEV__`: web é conveniência de
+desenvolvimento, não superfície de produção) · refresh proativo agendado pelo
+`exp` do JWT · encerrar uma sessão específica (a API só expõe a listagem, não a
+revogação por aparelho).
