@@ -421,6 +421,21 @@ pnpm test                 # jest --watchAll
 pnpm test:ci               # jest --ci
 ```
 
+`android/` e `ios/` não estão no repo: são saída do `expo prebuild`, e o
+`.gitignore` ignora as duas. Do lado nativo o prebuild é descartável — regenera
+igual —, mas ele **edita arquivos versionados** como efeito colateral, e três
+coisas precisam voltar atrás depois de cada execução:
+
+- escreve `android.package` no `app.json`, com o placeholder derivado
+  `com.anonymous.<slug>`;
+- reescreve os scripts `android`/`ios` de `expo start --*` para `expo run:*`,
+  o fluxo de dev client que saiu do repo junto com o Maestro;
+- reformata o `app.json`, o que quebra o `pnpm lint` até rodar `pnpm lint:fix`.
+
+Então: `git checkout -- package.json`, apagar a linha `package` do `app.json`,
+`pnpm lint:fix`, e confirmar no `git diff` que sobrou só a mudança pretendida —
+hoje a única que mexe no nativo de propósito é o `blockedPermissions` (§9).
+
 ---
 
 ## 9. Versões e decisões travadas
@@ -451,6 +466,21 @@ mudaram.
 
 **`packageManager: pnpm@11.22.0`** fixa a versão do pnpm via Corepack — mesmo
 mecanismo do repo da API.
+
+**`blockedPermissions` tira duas permissões que nada usa.** O manifest Android
+não está no repo (§8), então a lista de permissões é a que o template bare do
+Expo gera — e o comentário do próprio template diz "OPTIONAL PERMISSIONS,
+REMOVE WHATEVER YOU DO NOT NEED". Nada na árvore declara `SYSTEM_ALERT_WINDOW`
+nem `VIBRATE` fora do source set de debug do `react-native`, e a primeira é
+"desenhar sobre outros apps": aparece na listagem da Play, entra em
+questionário de segurança e é o vetor de overlay. Pedir sem usar é custo de
+confiança sem contrapartida — e, em boilerplate, todo app clonado herdaria.
+
+O par `READ`/`WRITE_EXTERNAL_STORAGE` fica de fora do bloqueio: o
+`expo-file-system` declara as duas no próprio manifest com
+`maxSdkVersion="32"`, e `blockedPermissions` injeta `tools:node="remove"`, que
+vence o merge contra manifest de biblioteca — bloquear aqui tiraria uma
+permissão de que uma lib precisa no Android 12 e abaixo.
 
 **NativeWind v4 + Tailwind 3.4, não o preview do NativeWind v5.** v4 é a
 versão estável e mantém `tailwind.config.js` em JS, o que permite os tokens
