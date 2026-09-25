@@ -35,6 +35,14 @@ componente seria a divisão especulativa que a regra evita.
 | `PASSWORD_VARIANTS` | `current` \| `new` — prop `variant` do `PasswordInput`. |
 | `FORM_FIELD_TYPES` | `text` \| `email` \| `password` \| `newPassword` \| `code` — prop `type` do `FormField`. |
 
+## Types
+
+| Name | Description |
+| ---- | ------------- |
+| `PasswordVariant` | União derivada de `PASSWORD_VARIANTS`. |
+| `FormFieldType` | União derivada de `FORM_FIELD_TYPES`. |
+| `TextInputProps` | Props do `TextInput`, incluindo o passthrough de props nativas. |
+
 ## Conventions
 
 - **`inputs/` não sabe que react-hook-form existe.** Só `FormField`

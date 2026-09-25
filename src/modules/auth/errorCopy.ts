@@ -6,6 +6,9 @@ import { API_ERROR_CODES } from '@/lib';
  * `App.tsx` registers this map there.
  */
 export const AUTH_ERROR_COPY = {
+  // No entry for EMAIL_ALREADY_IN_USE: confirm-email converts that race into
+  // EMAIL_VERIFICATION_FAILED, and register always answers 202, so no endpoint
+  // can ever send it — an entry here would document a contract that doesn't exist.
   [API_ERROR_CODES.INVALID_CREDENTIALS]: 'Email or password is incorrect.',
   [API_ERROR_CODES.INVALID_REFRESH_TOKEN]: 'Your session has expired. Please sign in again.',
   [API_ERROR_CODES.REFRESH_TOKEN_REUSED]:

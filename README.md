@@ -15,7 +15,10 @@ neste aparelho ou em todos, sessões ativas, exclusão da conta e gate de
 navegação. Só o login com Google está adiado. Há também uma camada de
 erros: error boundary de render, toast
 global para falhas sem tela dona, copy compartilhada por `code` e queries que
-pausam quando o aparelho fica offline.
+pausam quando o aparelho fica offline. Dark mode está implementado: variáveis
+CSS aplicadas em runtime pelo `ThemeProvider`, com o app seguindo o tema do
+sistema por padrão e um override manual (`light`/`dark`/`system`) que o
+usuário troca na tela de conta.
 
 > **Convenções de código** (como escrever) estão em **[AGENTS.md](AGENTS.md)**.
 > **Arquitetura** (o que existe, fronteiras entre módulos, decisões travadas e
@@ -183,4 +186,8 @@ deslogado.
       verificação de e-mail, recuperação e troca de senha, sessões ativas,
       exclusão de conta, e navegação condicional entre o stack logado e o
       deslogado. Falta só o login com Google, adiado.
+- [x] **Tema** — design tokens em `src/theme/tokens.js` (fonte única para
+      Tailwind e TypeScript), dark mode via variáveis CSS aplicadas em runtime
+      pelo `ThemeProvider`, tema do sistema por padrão com override manual
+      persistido (`useThemePreference`) e trocado na tela de conta.
 - [ ] **Polimento** — guia de adoção do boilerplate.

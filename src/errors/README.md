@@ -37,6 +37,14 @@ a copy que o usuário lê, o error boundary de render e o toast global.
 | ---- | ------------- |
 | `ERROR_KINDS` | `offline` \| `server` \| `input` \| `session` \| `unexpected`. |
 
+## Types
+
+| Name | Description |
+| ---- | ------------- |
+| `ErrorKind` | União derivada de `ERROR_KINDS`. |
+| `ErrorReporter` | Formato de quem `configureErrorReporter` registra. |
+| `ErrorToastValue` | O que `useErrorToast()` devolve. |
+
 ## Conventions
 
 - **`input` é qualquer 4xx que não seja erro de sessão**, e a ordem do teste

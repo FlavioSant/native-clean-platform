@@ -19,6 +19,10 @@ const SCREEN_TITLES = {
 /**
  * The account area, inside the signed-in shell. Unlike `AuthStack` this one
  * shows its header: it is a pushed flow, and the header is the way back.
+ *
+ * Lives in `auth`, not in a generic screens folder: every screen here reads or
+ * writes a credential or the session itself (password, sessions list, account
+ * deletion), which is exactly the boundary this module owns.
  */
 export const AccountStack = () => (
   <Stack.Navigator>

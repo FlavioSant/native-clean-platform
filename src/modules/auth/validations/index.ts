@@ -1,3 +1,9 @@
+/**
+ * Schemas for what the user types, consumed by react-hook-form. Schemas for
+ * what the API returns are a different contract — those live in `api/schemas.ts`.
+ * `policy.ts` groups everything that mirrors the API itself (constants, copy,
+ * field schemas); the other files group the forms that travel together.
+ */
 export { type Credentials, type SignUpValues, signInSchema, signUpSchema } from './credentials';
 export {
   type ChangePasswordValues,

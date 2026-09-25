@@ -10,7 +10,9 @@ import { type DeleteAccountValues, deleteAccountSchema } from '../validations';
 const COPY = {
   title: 'Delete your account',
   // What the API actually does: no grace period and no export, which is why the
-  // password is the only confirmation this screen asks for.
+  // password field IS the confirmation — no `Alert` on top of it. Every account
+  // has a password today (no Google sign-in yet); a Google-only account will
+  // have nothing to type here, and `/auth/me` will need to say so.
   warning:
     'This is permanent. Your account and everything tied to it are erased right away, with no grace period and nothing exported first.',
   passwordLabel: 'Password',
