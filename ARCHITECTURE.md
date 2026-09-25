@@ -435,7 +435,8 @@ coisas precisam voltar atrás depois de cada execução:
 
 Então: `git checkout -- package.json`, apagar a linha `package` do `app.json`,
 `pnpm lint:fix`, e confirmar no `git diff` que sobrou só a mudança pretendida —
-hoje a única que mexe no nativo de propósito é o `blockedPermissions` (§9).
+hoje as que mexem no nativo de propósito são o `blockedPermissions` e as flags
+de release do `expo-build-properties`, ambas no `app.json` (§9).
 
 ---
 
@@ -482,6 +483,35 @@ O par `READ`/`WRITE_EXTERNAL_STORAGE` fica de fora do bloqueio: o
 `maxSdkVersion="32"`, e `blockedPermissions` injeta `tools:node="remove"`, que
 vence o merge contra manifest de biblioteca — bloquear aqui tiraria uma
 permissão de que uma lib precisa no Android 12 e abaixo.
+
+**R8 e shrink de recursos ligados pelo `expo-build-properties`, não pelo
+`gradle.properties`.** O template bare deixa
+`android.enableMinifyInReleaseBuilds` em `false`, então a release sai com o
+código nativo Java/Kotlin sem shrink nem ofuscação. Ligar isso editando
+`android/gradle.properties` não sobrevive ao próximo prebuild (§8) — por isso
+as duas flags moram no `app.json`, como opções do plugin: a config versionada é
+a fonte, `android/` é saída. O `proguard-rules.pro` gerado já mantém Reanimated
+e TurboModules, mas **uma release de verdade ainda precisa ser exercitada antes
+de publicar**: o R8 quebra o que depende de reflection, e isso não aparece em
+debug. Nada aqui toca o bundle JS — esse caminho é do Hermes, já ligado por
+padrão.
+
+**Nenhuma ofuscação de JS.** O bundle é público: quem tem o APK extrai
+`assets/index.android.bundle` e roda `strings`, e o bytecode Hermes guarda a
+tabela de strings em claro — URL da API, os caminhos de `/auth/*`, a storage
+key e todo o `COPY` saem legíveis de lá. Um `javascript-obfuscator` não esconde
+nada disso e cobra caro: o Reanimated embute ~200 worklets como código-fonte JS
+legível no bundle, porque worklets são compilados em runtime na thread de UI, e
+reescrever essas strings quebra as animações só em release. A defesa é
+arquitetural e já está de pé — access token só em memória, refresh token no
+keystore/keychain, e nenhuma regra decidida no cliente.
+
+**A keystore é da EAS, nunca do repo.** O bloco `release` que o prebuild gera
+assina com a keystore de *debug*, senha `android` em texto plano; a Play
+recusa, e um APK assim é para medir, não para distribuir. O `.gitignore` já
+barra `*.jks`/`*.keystore`/`credentials.json` para que a real não chegue a um
+remoto nem por acidente — uma keystore vazada não pode mais assinar
+atualizações do app publicado sob ela.
 
 **NativeWind v4 + Tailwind 3.4, não o preview do NativeWind v5.** v4 é a
 versão estável e mantém `tailwind.config.js` em JS, o que permite os tokens

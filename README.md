@@ -149,7 +149,7 @@ regra de estilização (só NativeWind, sem `StyleSheet`) estão detalhados em
 As decisões travadas — por que Biome em vez de ESLint + Prettier, por que
 pnpm com `hoisted`, por que NativeWind v4 e não v5, por que React Navigation
 e não Expo Router, `noUncheckedIndexedAccess`, sem ordenação de classes
-Tailwind — e o porquê de cada uma vivem em
+Tailwind, por que nenhuma ofuscação de JS — e o porquê de cada uma vivem em
 [ARCHITECTURE.md](ARCHITECTURE.md), seção 9. Mantidas só lá para não haver
 duas explicações que possam divergir.
 
