@@ -14,7 +14,7 @@ primeiro app se aproximar do release.
 | ----------- | ------------------------------------------------------------------ |
 | `AuthProvider` | Guarda o token e o usuário. Registra-se no cliente HTTP na montagem. |
 | `AuthStack` | Navigator do fluxo deslogado: `SignIn`, `SignUp`, `VerifyEmail`, `ForgotPassword` e `ResetPassword`. |
-| `AccountStack` | Navigator da área logada: `Account`, `ChangePassword`, `Sessions` e `DeleteAccount`. O `AppStack` o registra como **uma** tela. |
+| `AccountStack` | Navigator da área logada: `AccountOverview`, `ChangePassword`, `Sessions` e `DeleteAccount`. O `AppStack` o registra como **uma** tela. |
 
 ## Hooks
 
@@ -38,7 +38,7 @@ primeiro app se aproximar do release.
 | `User`               | Perfil de `/auth/me`. Datas são strings ISO.            |
 | `Credentials`        | `{ email, password }`.                                  |
 | `AuthStackParamList` | Parâmetros das rotas do fluxo deslogado. `SignIn` e `VerifyEmail` aceitam um `email` opcional; `ResetPassword` exige um. |
-| `AccountStackParamList` | Parâmetros das rotas da área logada (`Account`, `ChangePassword`, `Sessions`, `DeleteAccount`). |
+| `AccountStackParamList` | Parâmetros das rotas da área logada (`AccountOverview`, `ChangePassword`, `Sessions`, `DeleteAccount`). |
 
 ## Flow
 
@@ -46,7 +46,7 @@ Cada tela do fluxo deslogado (`AuthStack`) e da área logada (`AccountStack`)
 aparece como nó próprio, com a navegação real entre elas — inclusive a que não
 é um `navigate`: abrir ou encerrar a sessão troca o stack inteiro, porque o
 `RootStack` renderiza um lado só. `SignIn`,
-`VerifyEmail`, `ChangePassword`, `DeleteAccount` e `Account` passam pelo
+`VerifyEmail`, `ChangePassword`, `DeleteAccount` e `AccountOverview` passam pelo
 `AuthProvider` via `useAuth()`; `SignUp`, `ForgotPassword` e `ResetPassword` não
 escrevem nem leem sessão, então chamam a API direto pela própria `useMutation`,
 e `Sessions` só lê, pela query de `useSessions`. Pra fora do módulo, o
@@ -65,7 +65,7 @@ flowchart TD
   end
 
   subgraph AccountStack["AccountStack (logado)"]
-    Account["Account"]
+    AccountOverview["AccountOverview"]
     ChangePassword["ChangePassword"]
     Sessions["Sessions"]
     DeleteAccount["DeleteAccount"]
@@ -85,14 +85,14 @@ flowchart TD
 
   SignIn -- "signIn OK: status = signedIn" --> Home
   VerifyEmail -- "confirmSignUp OK: status = signedIn" --> Home
-  Home -- "Conta" --> Account
-  Account -- "signOut / signOutEverywhere OK: status = signedOut" --> SignIn
+  Home -- "Conta" --> AccountOverview
+  AccountOverview -- "signOut / signOutEverywhere OK: status = signedOut" --> SignIn
   DeleteAccount -- "deleteAccount OK: status = signedOut" --> SignIn
 
-  Account -- "Trocar senha" --> ChangePassword
-  ChangePassword -- "changePassword OK" --> Account
-  Account -- "Sessões ativas" --> Sessions
-  Account -- "Excluir conta" --> DeleteAccount
+  AccountOverview -- "Trocar senha" --> ChangePassword
+  ChangePassword -- "changePassword OK" --> AccountOverview
+  AccountOverview -- "Sessões ativas" --> Sessions
+  AccountOverview -- "Excluir conta" --> DeleteAccount
 
   Provider["AuthContext / AuthProvider"]
   Api["api/authApi"]
@@ -102,7 +102,7 @@ flowchart TD
   VerifyEmail -. "useAuth().confirmSignUp" .-> Provider
   ChangePassword -. "useAuth().changePassword" .-> Provider
   DeleteAccount -. "useAuth().deleteAccount" .-> Provider
-  Account -. "signOut / signOutEverywhere" .-> Provider
+  AccountOverview -. "signOut / signOutEverywhere" .-> Provider
 
   SignUp -. "useMutation(startSignUp)" .-> Api
   VerifyEmail -. "useMutation(resendVerificationCode)" .-> Api

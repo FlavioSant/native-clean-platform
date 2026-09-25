@@ -31,7 +31,7 @@ const APPEARANCE_OPTIONS: readonly { value: ThemePreference; label: string }[] =
   { value: THEME_PREFERENCES.DARK, label: COPY.darkLabel },
 ];
 
-type AccountScreenProps = NativeStackScreenProps<AccountStackParamList, 'Account'>;
+type AccountScreenProps = NativeStackScreenProps<AccountStackParamList, 'AccountOverview'>;
 
 /**
  * Renders the address and the actions, and nothing dated. `/auth/me` also

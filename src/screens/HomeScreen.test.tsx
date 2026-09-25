@@ -26,6 +26,6 @@ describe('HomeScreen', () => {
     await renderScreen();
     await fireEvent.press(screen.getByText(ACCOUNT_LABEL));
 
-    expect(navigation.navigate).toHaveBeenCalledWith('Account', { screen: 'Account' });
+    expect(navigation.navigate).toHaveBeenCalledWith('Account', { screen: 'AccountOverview' });
   });
 });

@@ -27,7 +27,7 @@ const SCREEN_TITLES = {
 export const AccountStack = () => (
   <Stack.Navigator>
     <Stack.Screen
-      name="Account"
+      name="AccountOverview"
       component={AccountScreen}
       options={{ title: SCREEN_TITLES.account }}
     />

@@ -5,8 +5,10 @@ import { semanticColors, semanticColorsDark } from './tokens';
 import { useThemeColors } from './useThemeColors';
 
 describe('useThemeColors', () => {
-  afterEach(() => {
-    colorScheme.set('system');
+  afterEach(async () => {
+    await act(async () => {
+      colorScheme.set('system');
+    });
   });
 
   it('returns the light map for the light scheme', async () => {

@@ -17,7 +17,7 @@ export const HomeScreen = ({ navigation }: HomeScreenProps) => (
     <Pressable
       accessibilityRole="button"
       className="w-full items-center rounded-lg bg-primary px-4 py-3 active:bg-primary-pressed"
-      onPress={() => navigation.navigate('Account', { screen: 'Account' })}
+      onPress={() => navigation.navigate('Account', { screen: 'AccountOverview' })}
     >
       <Text className="text-base font-semibold text-content-inverse">{COPY.accountLabel}</Text>
     </Pressable>

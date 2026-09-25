@@ -11,7 +11,7 @@ export type AuthStackParamList = {
 
 /** The signed-in flow this module owns, reached as one screen of the app shell. */
 export type AccountStackParamList = {
-  Account: undefined;
+  AccountOverview: undefined;
   ChangePassword: undefined;
   Sessions: undefined;
   DeleteAccount: undefined;

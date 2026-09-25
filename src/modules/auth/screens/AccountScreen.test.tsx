@@ -78,7 +78,7 @@ const renderScreen = async () =>
   render(
     <AccountScreen
       navigation={navigation as never}
-      route={{ key: 'k', name: 'Account' } as never}
+      route={{ key: 'k', name: 'AccountOverview' } as never}
     />,
   );
 

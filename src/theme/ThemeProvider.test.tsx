@@ -12,8 +12,10 @@ const Probe = () => {
 };
 
 describe('ThemeProvider', () => {
-  afterEach(() => {
-    colorScheme.set('system');
+  afterEach(async () => {
+    await act(async () => {
+      colorScheme.set('system');
+    });
   });
 
   it('renders its children', async () => {
