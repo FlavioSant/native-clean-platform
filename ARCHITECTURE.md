@@ -129,7 +129,12 @@ src/
 │   └── README.md             convenção do formato de módulo
 ├── theme/                    design tokens — fonte única da verdade
 │   ├── tokens.js             CommonJS: alimenta tailwind.config.js (Node) e o TS (via index.ts)
+│   ├── ThemeProvider.tsx     aplica o tema ativo via vars() do NativeWind; montado em App.tsx
+│   ├── useThemeColors.ts     mapa semântico ativo, para o raro caso que precisa de valor literal fora do NativeWind
+│   ├── useThemePreference.ts { preference, setPreference } — override manual, hidratado do AsyncStorage
+│   ├── themePreferenceStorage.ts  leitura/escrita do preference no AsyncStorage
 │   ├── index.ts              reexporta tokens + parsePixels() para o código do app
+│   ├── *.test.ts(x)          colocados
 │   └── README.md
 └── utils/                    helpers puros, sem React e sem I/O
     ├── classnames.ts         clsx + tailwind-merge — merge de classNames condicional
