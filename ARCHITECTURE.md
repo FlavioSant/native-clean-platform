@@ -456,6 +456,15 @@ para essas chaves; é ali que moram:
   de build de dois pacotes específicos, explicitamente permitidos; por padrão
   o pnpm bloqueia scripts de build de dependências.
 
+**`overrides: { js-yaml@3: 3.15.2 }` força uma versão além do que qualquer
+dependência direta pede.** O `js-yaml` 3.15.1 tem a CVE GHSA-2883-xcg3-v3hh
+(`maxTotalMergeKeys` não limita CPU quando a fonte do merge está vazia); ele só
+chega a este repo por `babel-plugin-istanbul`, cujo próprio range (`^3.13.1`)
+já permite a versão corrigida — mas `pnpm update` não reresolve uma
+dependência transitiva sozinho, daí a versão precisar ser forçada aqui. Remova
+este override quando a toolchain do Jest passar a trazer o `js-yaml` corrigido
+por conta própria.
+
 **`pnpm-workspace.yaml` não faz deste repo um monorepo** — é um pacote único;
 o arquivo existe só porque é para onde essas configurações do pnpm se
 mudaram.
