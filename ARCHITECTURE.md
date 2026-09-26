@@ -113,20 +113,7 @@ src/
 │   ├── types.ts             RootStackParamList/AppStackParamList — a única declaração dos nomes de rota
 │   ├── index.ts
 │   └── README.md
-├── modules/                  um módulo hoje: auth
-│   ├── auth/
-│   │   ├── api/             authApi.ts (13 endpoints) + schemas.ts (respostas da API) + testes colocados
-│   │   ├── hooks/           useAuth, useAuthSession (boot/token/refresh), useAuthActions (o que se faz com a sessão), useSessions, useResendCooldown
-│   │   ├── context/         AuthContext.tsx — o context E o provider no mesmo arquivo + teste
-│   │   ├── navigation/      AuthStack.tsx, AccountStack.tsx, types.ts
-│   │   ├── screens/         SignIn, SignUp, VerifyEmail, ForgotPassword, ResetPassword, Account, ChangePassword, Sessions, DeleteAccount + testes colocados
-│   │   ├── validations/     credentials, password, verification, policy — schemas zod dos formulários + testes colocados
-│   │   ├── utils/           session.ts (resolveStatus, isEndedSession), singleFlight.ts, formatSessionDate.ts + testes
-│   │   ├── storage.ts       keychain (expo-secure-store); storage.web.ts é o fallback web
-│   │   ├── errorCopy.ts     AUTH_ERROR_COPY: code da API → copy; a message da API nunca vai para a tela
-│   │   ├── constants.ts, types.ts, index.ts
-│   │   └── README.md
-│   └── README.md             convenção do formato de módulo
+├── modules/                  um módulo por feature — formato e lista completa em src/modules/README.md
 ├── theme/                    design tokens — fonte única da verdade
 │   ├── tokens.js             CommonJS: alimenta tailwind.config.js (Node) e o TS (via index.ts)
 │   ├── ThemeProvider.tsx     aplica o tema ativo via vars() do NativeWind; montado em App.tsx
@@ -148,6 +135,13 @@ próprio `README.md`, que é a documentação simplificada do que aquela pasta
 exporta. É onde `Components` / `Hooks` / `Functions` / `Constants` de cada
 uma estão listados; este documento não repete esse inventário, só o formato
 e as regras que atravessam pastas.
+
+`src/modules/` fica de propósito sem expandir aqui: ao contrário do resto da
+árvore, o número de módulos cresce com o app — um por feature —, e detalhar
+cada um faria esta seção crescer sem limite e ficar desatualizada a cada
+hook renomeado. `src/modules/README.md` tem o formato genérico de um módulo
+e a lista dos que existem hoje; o `README.md` de cada módulo tem seus
+exports e seu próprio diagrama `## Flow`.
 
 ### A regra de fronteira entre módulos
 
