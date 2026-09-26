@@ -452,9 +452,9 @@ para essas chaves; é ali que moram:
   mínima de publicação que o pnpm passou a exigir por padrão (proteção contra
   pacote comprometido publicado há minutos); os pacotes do SDK testado juntos
   precisam ficar instaláveis imediatamente após o release.
-- `allowBuilds: { unrs-resolver: true }` — script de build de um pacote
-  específico, explicitamente permitido; por padrão o pnpm bloqueia scripts de
-  build de dependências.
+- `allowBuilds: { '@parcel/watcher': true, unrs-resolver: true }` — scripts
+  de build de dois pacotes específicos, explicitamente permitidos; por padrão
+  o pnpm bloqueia scripts de build de dependências.
 
 **`pnpm-workspace.yaml` não faz deste repo um monorepo** — é um pacote único;
 o arquivo existe só porque é para onde essas configurações do pnpm se
