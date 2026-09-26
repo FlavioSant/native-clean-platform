@@ -114,6 +114,30 @@ mutation, no call at all) — that shape is specific to the module, so draw
 what is there rather than forcing every module into the same internal
 layout.
 
+**Color the nodes by role, the same categories in every module.** A
+`classDef` per role, not per module, so a reader who has read one module's
+diagram already knows how to read the next one:
+
+- **Screens** — one hue per stack, in a fixed order: `#2a78d6` (blue) for
+  the first stack, `#eb6834` (orange) for the second. Name the class after
+  the stack (`authScreen`, `accountScreen`, …). A third stack takes the next
+  hue from a validated categorical palette — never an eyeballed color.
+- **`infra`** — the module's own plumbing that isn't a screen (a
+  `Context`/`Provider`, its API wrapper, storage): always
+  `fill:#1baf7a,stroke:#0b0b0b,stroke-width:2px,color:#0b0b0b`. This hue is
+  reserved — it never doubles as a stack color.
+- **`boundary`** — anything crossing the module's own edge (another
+  module's screen, `navigation`, `lib/api`, `errors`, the backend): always
+  `fill:#e1e0d9,stroke:#898781,stroke-width:1px,stroke-dasharray:4 3,color:#52514e`.
+  The dashed stroke marks "outside" before the reader even reads the fill.
+
+A `classDef` fill is fixed and does not follow Mermaid's theme the way the
+diagram's unstyled arrows and subgraph borders already do — pairing each fill
+with an explicit `color` (a dark or muted-dark tone matched to that fill) is
+what keeps the node legible whether GitHub renders the README in light or
+dark, with no extra step needed. `src/modules/auth/README.md` has the full
+`classDef`/`class` block to copy from.
+
 **Update the diagram in the same change that changes the flow it draws** —
 same rule as the rest of this README, extended to a diagram instead of a
 table row.

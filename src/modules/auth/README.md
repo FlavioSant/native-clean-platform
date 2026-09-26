@@ -52,7 +52,10 @@ escrevem nem leem sessão, então chamam a API direto pela própria `useMutation
 e `Sessions` só lê, pela query de `useSessions`. Pra fora do módulo, o
 diagrama cruza a fronteira em `lib/api` (onde o `AuthProvider` registra o
 bearer token via `configureAuthorization`), `navigation/RootStack` (que lê
-`status`) e `errors` (onde `App.tsx` registra `AUTH_ERROR_COPY`).
+`status`) e `errors` (onde `App.tsx` registra `AUTH_ERROR_COPY`). Azul marca
+as telas do `AuthStack`, laranja as do `AccountStack`, verde-água a infra que
+o próprio módulo é dono (`Provider`, `authApi`, `storage`), e cinza tracejado
+tudo que cruza a fronteira.
 
 ```mermaid
 flowchart TD
@@ -118,4 +121,13 @@ flowchart TD
   RootStack["navigation/RootStack"] -- "status" --> Provider
   Provider -. "configureAuthorization" .-> LibApi
   Provider -. "AUTH_ERROR_COPY (via App.tsx)" .-> ErrorsCopy["errors (copy.ts)"]
+
+  classDef authScreen fill:#2a78d6,stroke:#0b0b0b,stroke-width:2px,color:#0b0b0b;
+  classDef accountScreen fill:#eb6834,stroke:#0b0b0b,stroke-width:2px,color:#0b0b0b;
+  classDef infra fill:#1baf7a,stroke:#0b0b0b,stroke-width:2px,color:#0b0b0b;
+  classDef boundary fill:#e1e0d9,stroke:#898781,stroke-width:1px,stroke-dasharray:4 3,color:#52514e;
+  class SignIn,SignUp,VerifyEmail,ForgotPassword,ResetPassword authScreen;
+  class AccountOverview,ChangePassword,Sessions,DeleteAccount accountScreen;
+  class Provider,Api,Storage infra;
+  class Home,RootStack,LibApi,Backend,ErrorsCopy boundary;
 ```
