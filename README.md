@@ -9,8 +9,9 @@ react-hook-form + zod · expo-secure-store · Biome · pnpm
 
 **Status:** structure, tooling and conventions are ready, plus the `auth` module
 implemented against thirteen of the fourteen `/auth` endpoints of
-`api-clean-platform`: sign-up with email verification, sign-in, password
-recovery and change, refresh token rotation, session restore on boot, sign-out
+[`api-clean-platform`](https://github.com/LeandroGusmao/api-clean-platform):
+sign-up with email verification, sign-in, password recovery and change,
+refresh token rotation, session restore on boot, sign-out
 on this device or on all of them, active sessions, account deletion and a
 navigation gate. Only Google sign-in is deferred. There is also an error
 layer: a render error boundary, a global toast for failures with no owning
@@ -30,6 +31,15 @@ account screen.
 ## Getting started
 
 Requires pnpm. If you don't have it: `corepack enable pnpm`.
+
+**Backend first.** This app is the client of
+[`api-clean-platform`](https://github.com/LeandroGusmao/api-clean-platform), a
+Fastify + PostgreSQL authentication API that lives in its own repository — no
+server code is kept here. Start it by following the *Getting started* section
+of its README; it listens on `http://localhost:3000`, which is what
+`.env.example` points at. In development that API does not send real emails:
+the sign-up verification code and the password-reset token land in Mailpit, at
+`http://localhost:8025`.
 
 ```bash
 pnpm install
