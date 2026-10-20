@@ -23,10 +23,8 @@ All code is written in English — comments, JSDoc, function names, component
 names, variable names, constants, type names, file names, and commit messages.
 No exceptions, including for user-facing copy in this boilerplate.
 
-The one exception is `README.md` files — see [Rule 3](#3-module-readme):
-their prose is written in Portuguese, while any code sample inside them
-(identifiers, imports, folder trees) stays in English like the rest of the
-codebase.
+The same goes for documentation: the prose of every `README.md`
+([Rule 3](#3-module-readme)) and of `ARCHITECTURE.md` is written in English.
 
 ## 2. Arrow functions everywhere
 
@@ -57,11 +55,9 @@ Every module (each folder under `src/`, and each module under `src/modules/`)
 has a `README.md` that acts as its simplified documentation. It must list what
 the module exports and what each export is for.
 
-**Write README prose in Portuguese** — headings, descriptions, table cells,
-everything except code identifiers and folder/file names, which stay in
-English (they must match the actual code). This is the one carve-out from
-[Rule 1](#1-english-only). Section headings (`## Components`, `## Hooks`,
-`## Functions`, `## Constants`, `## Flow`) may stay in English too, since
+**Write README prose in English**, like everything else in the repo
+([Rule 1](#1-english-only)). Keep the section headings (`## Components`,
+`## Hooks`, `## Functions`, `## Constants`, `## Flow`) as written below, since
 they are the structural labels a reader scans for across every module.
 
 ```md

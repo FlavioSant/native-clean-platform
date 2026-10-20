@@ -1,15 +1,15 @@
 # Screens
 
-Telas que não pertencem a nenhum módulo específico. Uma tela é o componente
-que uma rota renderiza; ela compõe componentes de módulos e não tem lógica
-de negócio própria.
+Screens that do not belong to any specific module. A screen is the component
+a route renders; it composes modules' components and has no business logic of
+its own.
 
-Telas de um módulo vivem em `src/modules/<name>/screens/`, e são
-importadas pelo stack.
+A module's screens live in `src/modules/<name>/screens/`, and are imported by
+the stack.
 
 ## Components
 
 | Name           | Route  | Description                                              |
 | -------------- | ------ | ---------------------------------------------------------- |
-| `HomeScreen`   | `Home` | Tela inicial. Leva à área de conta, que é onde vivem as saídas de sessão. |
-| `SplashScreen` | —      | Sem rota própria: o `RootNavigator` a renderiza direto, fora do `NavigationContainer`, enquanto a sessão do boot ainda é desconhecida. |
+| `HomeScreen`   | `Home` | Home screen. Leads to the account area, which is where the session exits live. |
+| `SplashScreen` | —      | No route of its own: `RootNavigator` renders it directly, outside the `NavigationContainer`, while the boot session is still unknown. |

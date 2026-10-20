@@ -1,16 +1,16 @@
 # Config
 
-Variáveis de ambiente do app, lidas e validadas em um único lugar. Nada mais
-no código lê `process.env` diretamente.
+The app's environment variables, read and validated in a single place. Nothing
+else in the code reads `process.env` directly.
 
 ## Constants
 
 | Name           | Description                                                        |
 | -------------- | ------------------------------------------------------------------ |
-| `API_BASE_URL` | URL base da API, sem barra no final. Validada no import — um valor ausente ou malformado derruba o app no boot, com mensagem nomeando a variável. |
+| `API_BASE_URL` | The API's base URL, without a trailing slash. Validated on import — a missing or malformed value takes the app down at boot, with a message naming the variable. |
 
 ## Functions
 
 | Name                       | Description                                                    |
 | -------------------------- | -------------------------------------------------------------- |
-| `readApiBaseUrl(rawValue, isDevelopment?)` | Valida e normaliza a URL base. Fora de desenvolvimento (`__DEV__` por padrão) exige `https://`. Existe separada da constante para que os modos de falha sejam testáveis sem reimportar o módulo. |
+| `readApiBaseUrl(rawValue, isDevelopment?)` | Validates and normalises the base URL. Outside development (`__DEV__` by default) it requires `https://`. It exists separately from the constant so the failure modes are testable without re-importing the module. |

@@ -1,35 +1,35 @@
 # Errors
 
-Uma resposta só para "o que acontece quando algo falha": classificação do erro,
-a copy que o usuário lê, o error boundary de render e o toast global.
+A single answer to "what happens when something fails": error classification,
+the copy the user reads, the render error boundary and the global toast.
 
 ## Components
 
 | Name | Description |
 | ---- | ------------- |
-| `ErrorBoundary` | Contém uma exceção de render e mostra uma tela de fallback com "tentar de novo". |
-| `ErrorToastProvider` | Segura o toast e se registra como reporter global enquanto está montado. |
+| `ErrorBoundary` | Contains a render exception and shows a fallback screen with "try again". |
+| `ErrorToastProvider` | Holds the toast and registers itself as the global reporter while mounted. |
 
 ## Hooks
 
 | Name | Description |
 | ---- | ------------- |
-| `useErrorToast()` | `{ showError }`. Lança se usado fora do `ErrorToastProvider`. |
+| `useErrorToast()` | `{ showError }`. Throws if used outside the `ErrorToastProvider`. |
 
 ## Functions
 
 | Name | Description |
 | ---- | ------------- |
-| `classifyError(error)` | Devolve o `ErrorKind` do erro. |
-| `isRetryable(error)` | `true` só para `offline` e `server`. |
-| `shouldRetry(failureCount, error)` | No formato que a opção `retry` do TanStack Query espera. |
-| `copyForError(error)` | A frase que o usuário lê, escolhida pelo `code`. |
-| `registerErrorCopy(entries)` | Registra a copy de domínio de um módulo. Chamado pelo `App.tsx`. |
-| `resetErrorCopy()` | Só para testes, para um registro não vazar de um arquivo para outro. |
-| `configureErrorReporter(fn)` | Registra quem exibe o erro. `null` desregistra. |
-| `reportError(error)` | Entrega o erro a quem estiver registrado. No-op se não houver ninguém. |
-| `createQueryClient(overrides?)` | Monta o `QueryClient` do app: retry via `shouldRetry`, `staleTime` de 30 s, reporte global de erro de query e `networkMode: 'always'` nas mutations. `overrides` (`{ queries, mutations }`) existe para testes. |
-| `applyServerFieldErrors(error, setError, fields)` | Põe os `details[]` de um `ApiError` no campo do react-hook-form que os renderiza. `fields` é uma allowlist. |
+| `classifyError(error)` | Returns the error's `ErrorKind`. |
+| `isRetryable(error)` | `true` only for `offline` and `server`. |
+| `shouldRetry(failureCount, error)` | In the shape TanStack Query's `retry` option expects. |
+| `copyForError(error)` | The sentence the user reads, chosen by `code`. |
+| `registerErrorCopy(entries)` | Registers a module's domain copy. Called by `App.tsx`. |
+| `resetErrorCopy()` | For tests only, so a registry does not leak from one file to another. |
+| `configureErrorReporter(fn)` | Registers whoever displays the error. `null` unregisters. |
+| `reportError(error)` | Hands the error to whoever is registered. A no-op if no one is. |
+| `createQueryClient(overrides?)` | Builds the app's `QueryClient`: retry via `shouldRetry`, a 30 s `staleTime`, global reporting of query errors and `networkMode: 'always'` on mutations. `overrides` (`{ queries, mutations }`) exists for tests. |
+| `applyServerFieldErrors(error, setError, fields)` | Puts an `ApiError`'s `details[]` on the react-hook-form field that renders them. `fields` is an allowlist. |
 
 ## Constants
 
@@ -41,34 +41,35 @@ a copy que o usuário lê, o error boundary de render e o toast global.
 
 | Name | Description |
 | ---- | ------------- |
-| `ErrorKind` | União derivada de `ERROR_KINDS`. |
-| `ErrorReporter` | Formato de quem `configureErrorReporter` registra. |
-| `ErrorToastValue` | O que `useErrorToast()` devolve. |
+| `ErrorKind` | Union derived from `ERROR_KINDS`. |
+| `ErrorReporter` | Shape of whatever `configureErrorReporter` registers. |
+| `ErrorToastValue` | What `useErrorToast()` returns. |
 
-## Limites aceitos
+## Accepted limits
 
-- **Um boundary só, na raiz.** Um crash de tela apaga o app inteiro, não só a
-  tela. Preservar a navegação exigiria um segundo boundary dentro do navigator —
-  fica para quando houver mais de um stack para preservar.
-- **"Tentar de novo" só remonta.** Se o erro for determinístico, ele volta. É o
-  que todo boundary faz; fingir o contrário seria pior.
-- **Um slot, não fila.** Erro novo substitui o anterior. Erros em rajada quase
-  sempre têm a mesma causa.
-- **A dispensa é assíncrona.** A mensagem some no callback que encerra o fade,
-  não no toque — um teste que afirme o contrário falha por motivo errado.
+- **One boundary, at the root.** A screen crash wipes out the whole app, not
+  just the screen. Preserving navigation would require a second boundary inside
+  the navigator — left for when there is more than one stack to preserve.
+- **"Try again" only remounts.** If the error is deterministic, it comes back.
+  That is what every boundary does; pretending otherwise would be worse.
+- **One slot, not a queue.** A new error replaces the previous one. Bursts of
+  errors almost always share the same cause.
+- **Dismissal is asynchronous.** The message disappears in the callback that
+  ends the fade, not on touch — a test asserting otherwise fails for the wrong
+  reason.
 
-## Não existe ainda
+## Does not exist yet
 
-Telemetria de qualquer tipo, swipe para dispensar, toast com ação, boundary por
-tela, e captura de rejeição de promise fora do TanStack Query. O desenho está em
-`docs/superpowers/specs/2026-09-02-error-layer-design.md`.
+Telemetry of any kind, swipe to dismiss, a toast with an action, a per-screen
+boundary, and capturing promise rejections outside TanStack Query.
 
-- **`TOO_MANY_REQUESTS` ganhou copy, e o `classify.ts` não mudou.** Um `429` já
-  cai em `INPUT` pela checagem de status, e `INPUT` não é retentável — que é o
-  comportamento certo, já que repetir é o que produziu o rate limit. A única
-  lacuna real era o `copyForError` cair no texto genérico, e ela se fecha com
-  uma entrada no `BASE_COPY`. Um `ErrorKind` novo não pagaria nada.
-- **O `Retry-After` do `429` é ignorado de propósito.** Renderizar uma contagem
-  a partir dele significa um relógio, um loop de re-render e uma segunda fonte
-  de verdade ao lado do cooldown de reenvio, por um header sobre o qual o
-  usuário não pode agir de forma diferente de "tente daqui a pouco".
+- **`TOO_MANY_REQUESTS` gained copy, and `classify.ts` did not change.** A `429`
+  already falls into `INPUT` through the status check, and `INPUT` is not
+  retryable — which is the right behaviour, since retrying is what produced the
+  rate limit. The only real gap was `copyForError` falling back to the generic
+  text, and it closes with one entry in `BASE_COPY`. A new `ErrorKind` would not
+  pay for itself.
+- **The `429`'s `Retry-After` is ignored on purpose.** Rendering a countdown
+  from it means a clock, a re-render loop and a second source of truth next to
+  the resend cooldown, for a header on which the user cannot act any differently
+  than "try again in a bit".

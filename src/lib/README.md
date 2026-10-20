@@ -1,39 +1,39 @@
 # Lib
 
-Integrações com o mundo externo que não pertencem a nenhum módulo. Hoje só a
-API. **Nada aqui conhece React** — sem hooks, sem contextos, sem componentes —
-e nada aqui conhece módulo de domínio: quando o cliente precisa de algo que só
-um módulo sabe (o token da sessão), ele expõe um ponto de registro e o módulo
-se registra nele.
+Integrations with the outside world that do not belong to any module. Today
+only the API. **Nothing here knows React** — no hooks, no contexts, no
+components — and nothing here knows a domain module: when the client needs
+something only a module knows (the session token), it exposes a registration
+point and the module registers itself there.
 
-## Constants (objeto)
+## Constants (object)
 
 | Name  | Description |
 | ----- | ------------- |
-| `api` | `{ get, post, patch, delete }` — um método por verbo, cada um `(path, body?) => Promise<T>`. Único ponto de entrada do cliente. |
+| `api` | `{ get, post, patch, delete }` — one method per verb, each `(path, body?) => Promise<T>`. The client's single entry point. |
 
 ## Functions
 
 | Name                           | Description                                                     |
 | ------------------------------ | ---------------------------------------------------------------- |
-| `configureAuthorization(h)`    | Registra `{ getAccessToken, refreshAccessToken }`. Passe `null` para desregistrar. |
-| `startConnectivityWatch()`     | Liga o NetInfo ao `onlineManager` do TanStack Query. Chamado uma vez pelo `App.tsx`. |
-| `parseOrThrow(schema, payload)` | Valida a resposta de qualquer endpoint contra um schema Zod e devolve o dado tipado; num drift, lança `ApiError` com `UNEXPECTED_RESPONSE`. Único, para que todo módulo trate contrato quebrado do mesmo jeito. |
+| `configureAuthorization(h)`    | Registers `{ getAccessToken, refreshAccessToken }`. Pass `null` to unregister. |
+| `startConnectivityWatch()`     | Connects NetInfo to TanStack Query's `onlineManager`. Called once by `App.tsx`. |
+| `parseOrThrow(schema, payload)` | Validates any endpoint's response against a Zod schema and returns the typed data; on drift, throws an `ApiError` with `UNEXPECTED_RESPONSE`. A single one, so every module handles a broken contract the same way. |
 
 ## Constants
 
 | Name                    | Description                                                       |
 | ----------------------- | ------------------------------------------------------------------ |
-| `API_ERROR_CODES`       | Os códigos de erro da API, copiados do `api-clean-platform`, mais dois do próprio cliente (`NETWORK_ERROR`, `UNEXPECTED_RESPONSE`). |
-| `UNAUTHORIZED_STATUS`   | `401` — o status que o cliente e o `classifyError` de `@/errors` comparam. |
-| `CLIENT_FAILURE_STATUS` | `0` — não houve status HTTP: a falha foi deste lado do fio.        |
+| `API_ERROR_CODES`       | The API's error codes, copied from `api-clean-platform`, plus two from the client itself (`NETWORK_ERROR`, `UNEXPECTED_RESPONSE`). |
+| `UNAUTHORIZED_STATUS`   | `401` — the status the client and `@/errors`' `classifyError` compare against. |
+| `CLIENT_FAILURE_STATUS` | `0` — there was no HTTP status: the failure was on this side of the wire. |
 
 ## Types
 
 | Name                    | Description                                              |
 | ----------------------- | --------------------------------------------------------- |
-| `ApiError`              | Erro com `status`, `code`, `details` e `traceId`.          |
-| `ApiErrorCode`          | União derivada de `API_ERROR_CODES`.                       |
-| `ValidationDetail`      | Um item de `details[]` numa resposta 400.                  |
-| `ErrorEnvelope`         | O formato de erro que a API sempre devolve.                |
-| `AuthorizationHandlers` | O par de callbacks que liga o cliente à sessão.            |
+| `ApiError`              | Error with `status`, `code`, `details` and `traceId`.      |
+| `ApiErrorCode`          | Union derived from `API_ERROR_CODES`.                      |
+| `ValidationDetail`      | An item of `details[]` in a 400 response.                  |
+| `ErrorEnvelope`         | The error shape the API always returns.                    |
+| `AuthorizationHandlers` | The pair of callbacks that connects the client to the session. |

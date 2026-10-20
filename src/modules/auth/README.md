@@ -1,65 +1,66 @@
 # Auth
 
-Sessão do app: cadastro em três passos com verificação de e-mail, login,
-recuperação e troca de senha, rotação do refresh token, restauração da sessão no
-boot, logout (neste aparelho ou em todos), listagem das sessões ativas, exclusão
-da conta e o estado que a navegação usa para escolher entre o stack logado e o
-deslogado. Fala com treze dos catorze endpoints de `/auth` da API
-(`api-clean-platform`): só `POST /auth/google` não tem caller, adiado até o
-primeiro app se aproximar do release.
+The app's session: three-step sign-up with email verification, sign-in,
+password recovery and change, refresh token rotation, session restore on
+boot, sign-out (on this device or on all of them), listing of active sessions,
+account deletion and the state navigation uses to choose between the signed-in
+and the signed-out stack. Talks to thirteen of the API's fourteen `/auth`
+endpoints (`api-clean-platform`): only `POST /auth/google` has no caller,
+deferred until the first app nears release.
 
 ## Components
 
 | Name        | Description                                                      |
 | ----------- | ------------------------------------------------------------------ |
-| `AuthProvider` | Guarda o token e o usuário. Registra-se no cliente HTTP na montagem. |
-| `AuthStack` | Navigator do fluxo deslogado: `SignIn`, `SignUp`, `VerifyEmail`, `ForgotPassword` e `ResetPassword`. |
-| `AccountStack` | Navigator da área logada: `AccountOverview`, `ChangePassword`, `Sessions` e `DeleteAccount`. O `AppStack` o registra como **uma** tela. |
+| `AuthProvider` | Holds the token and the user. Registers itself with the HTTP client on mount. |
+| `AuthStack` | The signed-out flow's navigator: `SignIn`, `SignUp`, `VerifyEmail`, `ForgotPassword` and `ResetPassword`. |
+| `AccountStack` | The signed-in area's navigator: `AccountOverview`, `ChangePassword`, `Sessions` and `DeleteAccount`. `AppStack` registers it as **one** screen. |
 
 ## Hooks
 
 | Name       | Description                                                              |
 | ---------- | -------------------------------------------------------------------------- |
-| `useAuth()` | `{ status, user, signIn, confirmSignUp, changePassword, deleteAccount, signOut, signOutEverywhere, isSubmitting, isSigningOut }`. Lança se usado fora do `AuthProvider`. |
+| `useAuth()` | `{ status, user, signIn, confirmSignUp, changePassword, deleteAccount, signOut, signOutEverywhere, isSubmitting, isSigningOut }`. Throws if used outside the `AuthProvider`. |
 
 ## Constants
 
 | Name            | Description                                                     |
 | --------------- | ----------------------------------------------------------------- |
 | `AUTH_STATUSES` | `loading` \| `signedOut` \| `signedIn`.                            |
-| `AUTH_ERROR_COPY` | A copy dos códigos de erro de domínio deste módulo. O `App.tsx` a registra em `@/errors`. |
+| `AUTH_ERROR_COPY` | The copy for this module's domain error codes. `App.tsx` registers it in `@/errors`. |
 
 ## Types
 
 | Name                 | Description                                           |
 | -------------------- | ------------------------------------------------------- |
-| `AuthStatus`         | União derivada de `AUTH_STATUSES`.                      |
-| `AuthContextValue`   | O que `useAuth()` devolve.                              |
-| `User`               | Perfil de `/auth/me`. Datas são strings ISO.            |
+| `AuthStatus`         | Union derived from `AUTH_STATUSES`.                     |
+| `AuthContextValue`   | What `useAuth()` returns.                               |
+| `User`               | Profile from `/auth/me`. Dates are ISO strings.         |
 | `Credentials`        | `{ email, password }`.                                  |
-| `AuthStackParamList` | Parâmetros das rotas do fluxo deslogado. `SignIn` e `VerifyEmail` aceitam um `email` opcional; `ResetPassword` exige um. |
-| `AccountStackParamList` | Parâmetros das rotas da área logada (`AccountOverview`, `ChangePassword`, `Sessions`, `DeleteAccount`). |
+| `AuthStackParamList` | Params of the signed-out flow's routes. `SignIn` and `VerifyEmail` accept an optional `email`; `ResetPassword` requires one. |
+| `AccountStackParamList` | Params of the signed-in area's routes (`AccountOverview`, `ChangePassword`, `Sessions`, `DeleteAccount`). |
 
 ## Flow
 
-Cada tela do fluxo deslogado (`AuthStack`) e da área logada (`AccountStack`)
-aparece como nó próprio, com a navegação real entre elas — inclusive a que não
-é um `navigate`: abrir ou encerrar a sessão troca o stack inteiro, porque o
-`RootStack` renderiza um lado só. `SignIn`,
-`VerifyEmail`, `ChangePassword`, `DeleteAccount` e `AccountOverview` passam pelo
-`AuthProvider` via `useAuth()`; `SignUp`, `ForgotPassword` e `ResetPassword` não
-escrevem nem leem sessão, então chamam a API direto pela própria `useMutation`,
-e `Sessions` só lê, pela query de `useSessions`. Pra fora do módulo, o
-diagrama cruza a fronteira em `lib/api` (onde o `AuthProvider` registra o
-bearer token via `configureAuthorization`), `navigation/RootStack` (que lê
-`status`) e `errors` (onde `App.tsx` registra `AUTH_ERROR_COPY`). Azul marca
-as telas do `AuthStack`, laranja as do `AccountStack`, verde-água a infra que
-o próprio módulo é dono (`Provider`, `authApi`, `storage`), e cinza tracejado
-tudo que cruza a fronteira.
+Each screen of the signed-out flow (`AuthStack`) and of the signed-in area
+(`AccountStack`) appears as a node of its own, with the real navigation between
+them — including the kind that is not a `navigate`: opening or ending the
+session swaps the entire stack, because `RootStack` renders only one side.
+`SignIn`, `VerifyEmail`, `ChangePassword`, `DeleteAccount` and `AccountOverview`
+go through the `AuthProvider` via `useAuth()`; `SignUp`, `ForgotPassword` and
+`ResetPassword` neither write nor read the session, so they call the API
+directly through their own `useMutation`, and `Sessions` only reads, through
+the `useSessions` query. Out of the module, the diagram crosses the boundary
+at `lib/api` (where the `AuthProvider` registers the bearer token via
+`configureAuthorization`), `navigation/RootStack` (which reads `status`) and
+`errors` (where `App.tsx` registers `AUTH_ERROR_COPY`). Blue marks the
+`AuthStack` screens, orange the `AccountStack` ones, teal the infra the module
+itself owns (`Provider`, `authApi`, `storage`), and dashed grey everything that
+crosses the boundary.
 
 ```mermaid
 flowchart TD
-  subgraph AuthStack["AuthStack (deslogado)"]
+  subgraph AuthStack["AuthStack (signed out)"]
     SignIn["SignIn"]
     SignUp["SignUp"]
     VerifyEmail["VerifyEmail"]
@@ -67,7 +68,7 @@ flowchart TD
     ResetPassword["ResetPassword"]
   end
 
-  subgraph AccountStack["AccountStack (logado)"]
+  subgraph AccountStack["AccountStack (signed in)"]
     AccountOverview["AccountOverview"]
     ChangePassword["ChangePassword"]
     Sessions["Sessions"]
@@ -76,26 +77,26 @@ flowchart TD
 
   Home["screens/HomeScreen (AppStack)"]
 
-  SignIn -- "Cadastrar" --> SignUp
-  SignIn -- "Já tenho um código" --> VerifyEmail
-  SignIn -- "Esqueci a senha" --> ForgotPassword
+  SignIn -- "Create an account" --> SignUp
+  SignIn -- "I already have a code" --> VerifyEmail
+  SignIn -- "Forgot your password?" --> ForgotPassword
   SignUp -- "startSignUp OK" --> VerifyEmail
-  SignUp -- "Já tenho conta" --> SignIn
-  VerifyEmail -- "Voltar" --> SignIn
+  SignUp -- "I already have an account" --> SignIn
+  VerifyEmail -- "Back to sign in" --> SignIn
   ForgotPassword -- "requestPasswordReset OK" --> ResetPassword
-  ForgotPassword -- "Voltar" --> SignIn
+  ForgotPassword -- "Back to sign in" --> SignIn
   ResetPassword -- "resetPassword OK" --> SignIn
 
   SignIn -- "signIn OK: status = signedIn" --> Home
   VerifyEmail -- "confirmSignUp OK: status = signedIn" --> Home
-  Home -- "Conta" --> AccountOverview
+  Home -- "Account" --> AccountOverview
   AccountOverview -- "signOut / signOutEverywhere OK: status = signedOut" --> SignIn
   DeleteAccount -- "deleteAccount OK: status = signedOut" --> SignIn
 
-  AccountOverview -- "Trocar senha" --> ChangePassword
+  AccountOverview -- "Change password" --> ChangePassword
   ChangePassword -- "changePassword OK" --> AccountOverview
-  AccountOverview -- "Sessões ativas" --> Sessions
-  AccountOverview -- "Excluir conta" --> DeleteAccount
+  AccountOverview -- "Active sessions" --> Sessions
+  AccountOverview -- "Delete account" --> DeleteAccount
 
   Provider["AuthContext / AuthProvider"]
   Api["api/authApi"]

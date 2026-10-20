@@ -1,28 +1,28 @@
 # Modules
 
-Organizado **por módulo, não por tipo de arquivo**. Cada pasta aqui é um
-módulo autocontido — telas, hooks, chamadas de API, tipos — que expõe sua
-superfície pública através de um `index.ts`.
+Organised **by module, not by file type**. Each folder here is a
+self-contained module — screens, hooks, API calls, types — that exposes its
+public surface through an `index.ts`.
 
 ```
 modules/<name>/
-  api/          chamadas ao backend deste módulo
-  components/   componentes específicos deste módulo
-  context/      os React Contexts deste módulo, cada um com seu provider
-  hooks/        hooks específicos deste módulo
-  navigation/   o navigator deste módulo e os tipos de parâmetro das suas rotas
-  screens/      telas pertencentes a este módulo
-  utils/        helpers puros deste módulo — sem React, sem I/O
-  validations/  schemas de validação dos formulários deste módulo
-  constants.ts  constantes compartilhadas dentro do módulo
+  api/          calls to this module's backend
+  components/   components specific to this module
+  context/      this module's React Contexts, each with its provider
+  hooks/        hooks specific to this module
+  navigation/   this module's navigator and the param types of its routes
+  screens/      screens belonging to this module
+  utils/        this module's pure helpers — no React, no I/O
+  validations/  validation schemas for this module's forms
+  constants.ts  constants shared within the module
   types.ts
-  index.ts      o ÚNICO ponto de entrada que outros módulos podem importar
-  README.md     obrigatório — veja AGENTS.md, inclui uma seção `## Flow` com
-                diagrama Mermaid (telas → hooks → API, e conexão com fora)
+  index.ts      the ONLY entry point other modules may import
+  README.md     mandatory — see AGENTS.md, includes a `## Flow` section with a
+                Mermaid diagram (screens → hooks → API, and the connection to the outside)
 ```
 
 ## Modules
 
 | Name   | Description                                                          |
 | ------ | ---------------------------------------------------------------------- |
-| `auth` | Sessão do app: cadastro, login, restauração no boot, logout e o estado que a navegação consulta. |
+| `auth` | The app's session: sign-up, sign-in, restore on boot, sign-out and the state navigation consults. |

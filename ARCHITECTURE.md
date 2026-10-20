@@ -1,13 +1,12 @@
-# Arquitetura
+# Architecture
 
-Documentação do que **existe neste repositório**. Nada aqui é plano ou intenção —
-se está escrito, está construído e verificável rodando os comandos da §9.
+Documentation of what **exists in this repository**. Nothing here is a plan or
+an intention — if it is written down, it is built and verifiable by running the
+commands in §9.
 
-Este é o único documento de arquitetura versionado. `docs/superpowers/` guarda
-specs e planos de decisões pontuais já tomadas — são referência complementar,
-não substituem este arquivo.
+This is the only versioned architecture document.
 
-**Stack hoje:** Expo SDK 57 (managed) · React Native 0.86 · TypeScript 7 ·
+**Stack today:** Expo SDK 57 (managed) · React Native 0.86 · TypeScript 7 ·
 NativeWind v4 (Tailwind 3.4) · React Navigation 7 · TanStack Query 5 · axios ·
 react-hook-form 7 + zod 4 · expo-secure-store · @react-native-community/netinfo ·
 Jest (jest-expo) +
@@ -15,319 +14,312 @@ React Native Testing Library · Biome · pnpm
 
 ---
 
-## 1. O princípio
+## 1. The principle
 
-> **Nada fora de um módulo importa um arquivo de dentro dele.**
+> **Nothing outside a module imports a file from inside it.**
 
-Um módulo (`src/modules/<name>/`) expõe sua superfície pública inteira através
-de um único `index.ts`. Todo o resto — telas, hooks, chamadas de API,
-componentes internos — é implementação, e implementação não se importa de
-fora. Módulos também não se importam entre si: código que mais de um módulo
-precisa sobe para `src/components/` (a partir do segundo consumidor) ou para
-um módulo de topo — `src/hooks/`, `src/lib/`, `src/store/` — criado
-quando algo realmente precisar dele, não antes.
+A module (`src/modules/<name>/`) exposes its entire public surface through a
+single `index.ts`. Everything else — screens, hooks, API calls, internal
+components — is implementation, and implementation is not imported from
+outside. Modules do not import each other either: code that more than one
+module needs moves up to `src/components/` (from the second consumer on) or to
+a top-level module — `src/hooks/`, `src/lib/`, `src/store/` — created when
+something actually needs it, not before.
 
-Este repositório é **front-end only**. O backend com o qual o app conversa
-mora num repositório separado (`api-clean-platform`) — nunca entra aqui
-código de servidor, banco ou emissão de token. É por isso que este documento
-não tem seção de banco de dados, taxonomia de erro de domínio ou camada de
-infra: nada disso é responsabilidade deste lado da fronteira.
+This repository is **front-end only**. The backend the app talks to lives in a
+separate repository (`api-clean-platform`) — server, database, or token-issuing
+code never enters here. That is why this document has no database section, no
+domain-error taxonomy and no infra layer: none of that is this side of the
+boundary's responsibility.
 
-Hoje existe **um módulo**, `auth` (§2), construído contra treze dos catorze
-endpoints de `/auth` de `api-clean-platform` (só `POST /auth/google` está
-adiado). Ele é a referência de formato para o
-próximo: é o `index.ts` dele que define o que o resto do app enxerga, e foi
-ele que forçou à existência os dois módulos de topo que faltavam —
-`src/config/` e `src/lib/`.
+Today there is **one module**, `auth` (§2), built against thirteen of the
+fourteen `/auth` endpoints of `api-clean-platform` (only `POST /auth/google` is
+deferred). It is the reference shape for the next one: its `index.ts` defines
+what the rest of the app sees, and it is what forced the two missing top-level
+modules into existence — `src/config/` and `src/lib/`.
 
 ---
 
-## 2. A árvore
+## 2. The tree
 
 ```text
-App.tsx                    raiz: providers (gesture handler, query client, safe area, status bar, erros, sessão) + navegação
-index.ts                   registerRootComponent — entrypoint do Expo
-global.css                  entrada do Tailwind, importada por App.tsx
-biome.json                  linter + formatter (substitui ESLint e Prettier)
-tailwind.config.js          lê os tokens de src/theme/tokens.js
-tsconfig.json               extends expo/tsconfig.base — strict, noUncheckedIndexedAccess, alias @/
-pnpm-workspace.yaml         settings do pnpm — pnpm 11 não lê mais .npmrc (§9)
-jest.setup.ts               EXPO_PUBLIC_* de teste + keychain em memória (mock de expo-secure-store)
-.env.example                EXPO_PUBLIC_API_URL — copie para .env antes de rodar
-docs/superpowers/           specs e planos das decisões já tomadas
+App.tsx                    root: providers (gesture handler, query client, safe area, status bar, errors, session) + navigation
+index.ts                   registerRootComponent — the Expo entrypoint
+global.css                  Tailwind entry, imported by App.tsx
+biome.json                  linter + formatter (replaces ESLint and Prettier)
+tailwind.config.js          reads the tokens from src/theme/tokens.js
+tsconfig.json               extends expo/tsconfig.base — strict, noUncheckedIndexedAccess, @/ alias
+pnpm-workspace.yaml         pnpm settings — pnpm 11 no longer reads .npmrc (§9)
+jest.setup.ts               test EXPO_PUBLIC_* + in-memory keychain (expo-secure-store mock)
+.env.example                EXPO_PUBLIC_API_URL — copy to .env before running
 src/
-├── components/               primitivas de UI conhecidas de antemão como multi-app — exceção documentada à regra do segundo consumidor
-│   ├── FormErrorMessage.tsx  mensagem de erro de formulário; `null` não renderiza nada
-│   ├── FormScreen.tsx        raiz de tela com formulário: teclado + scroll
-│   ├── SubmitButton.tsx      botão de submit com spinner + disabled via `isPending`
-│   ├── *.test.tsx            colocados, um por componente
-│   ├── inputs/               primitivas puras, sem react-hook-form
+├── components/               UI primitives known in advance to be multi-app — a documented exception to the second-consumer rule
+│   ├── FormErrorMessage.tsx  form error message; `null` renders nothing
+│   ├── FormScreen.tsx        form screen root: keyboard + scroll
+│   ├── SubmitButton.tsx      submit button with spinner + disabled via `isPending`
+│   ├── *.test.tsx            colocated, one per component
+│   ├── inputs/               pure primitives, no react-hook-form
 │   │   ├── TextInput.tsx     base: label, value/onChangeText, error, className
-│   │   ├── EmailInput.tsx    teclado/autocomplete de email
+│   │   ├── EmailInput.tsx    email keyboard/autocomplete
 │   │   ├── PasswordInput.tsx  secureTextEntry + variant 'current' | 'new'
-│   │   ├── CodeInput.tsx     teclado numérico, one-time-code, `digits` do chamador
-│   │   └── *.test.tsx        colocados, um por componente
-│   ├── forms/                 a integração com react-hook-form
-│   │   ├── FormField.tsx     Controller + despacha pro input certo por `type`
+│   │   ├── CodeInput.tsx     numeric keyboard, one-time-code, `digits` from the caller
+│   │   └── *.test.tsx        colocated, one per component
+│   ├── forms/                 the react-hook-form integration
+│   │   ├── FormField.tsx     Controller + dispatches to the right input by `type`
 │   │   └── FormField.test.tsx
 │   ├── index.ts
 │   └── README.md
-├── config/                  variáveis de ambiente, validadas na carga
-│   ├── env.ts               readApiBaseUrl() + API_BASE_URL — falha alto se faltar ou, fora de dev, se não for https
-│   ├── env.test.ts          colocado
+├── config/                  environment variables, validated on load
+│   ├── env.ts               readApiBaseUrl() + API_BASE_URL — fails loudly if missing or, outside dev, if not https
+│   ├── env.test.ts          colocated
 │   ├── index.ts
 │   └── README.md
-├── errors/                   uma resposta só para "o que acontece quando algo falha"
+├── errors/                   a single answer to "what happens when something fails"
 │   ├── classify.ts          ERROR_KINDS + classifyError/isRetryable/shouldRetry
-│   ├── copy.ts              mapa base + registro por módulo → a frase que o usuário lê
-│   ├── reporter.ts          o seam entre o QueryCache.onError e o provider do toast
-│   ├── queryClient.ts       createQueryClient() — a política do QueryClient do app, com `meta` tipado
-│   ├── applyServerFieldErrors.ts  details[] de um ApiError → campos do react-hook-form
-│   ├── ErrorBoundary.tsx    a ÚNICA classe do código (React exige) + a tela de fallback
-│   ├── ErrorToast.tsx       context + provider + host, um slot só
+│   ├── copy.ts              base map + per-module registry → the sentence the user reads
+│   ├── reporter.ts          the seam between QueryCache.onError and the toast provider
+│   ├── queryClient.ts       createQueryClient() — the app's QueryClient policy, with typed `meta`
+│   ├── applyServerFieldErrors.ts  an ApiError's details[] → react-hook-form fields
+│   ├── ErrorBoundary.tsx    the ONLY class in the code (React requires it) + the fallback screen
+│   ├── ErrorToast.tsx       context + provider + host, a single slot
 │   ├── useErrorToast.ts     { showError }
-│   ├── reporting.test.tsx   integração: query/mutation que falha chega (ou não) ao toast
-│   ├── *.test.ts(x)         colocados
+│   ├── reporting.test.tsx   integration: a failing query/mutation does (or does not) reach the toast
+│   ├── *.test.ts(x)         colocated
 │   ├── index.ts
 │   └── README.md
-├── lib/                      I/O sem React — nem hook, nem contexto, nem componente
-│   ├── api/                 pasta própria: interceptors, cliente e validação de resposta
-│   │   ├── client.ts        instância axios, wiring dos 2 interceptors, api (get/post/patch/delete)
+├── lib/                      I/O without React — no hook, no context, no component
+│   ├── api/                 its own folder: interceptors, client and response validation
+│   │   ├── client.ts        axios instance, wiring of the 2 interceptors, api (get/post/patch/delete)
 │   │   ├── requestInterceptor.ts   bearer token + configureAuthorization/getAuthorizationHandlers
-│   │   ├── responseInterceptor.ts  ApiError, API_ERROR_CODES, tradução de erro + retry de refresh
-│   │   ├── parseOrThrow.ts  valida a resposta contra um schema zod; drift vira ApiError
-│   │   └── *.test.ts        colocados — client.test.ts troca defaults.adapter para exercitar os interceptors
-│   ├── connectivity.ts      NetInfo → onlineManager: sem isso o RN "está sempre online"
-│   ├── index.ts             não reexporta a instância: de fora, só api
+│   │   ├── responseInterceptor.ts  ApiError, API_ERROR_CODES, error translation + refresh retry
+│   │   ├── parseOrThrow.ts  validates the response against a zod schema; drift becomes an ApiError
+│   │   └── *.test.ts        colocated — client.test.ts swaps defaults.adapter to exercise the interceptors
+│   ├── connectivity.ts      NetInfo → onlineManager: without it RN "is always online"
+│   ├── index.ts             does not re-export the instance: from outside, only api
 │   └── README.md
-├── screens/                 telas que não pertencem a nenhum módulo específico
-│   ├── HomeScreen.tsx       o shell logado — leva à área de conta
-│   ├── SplashScreen.tsx     só durante o boot, enquanto o token guardado é verificado
+├── screens/                 screens that do not belong to any specific module
+│   ├── HomeScreen.tsx       the signed-in shell — leads to the account area
+│   ├── SplashScreen.tsx     only during boot, while the stored token is verified
 │   ├── index.ts
 │   └── README.md
-├── navigation/               composition root: lista módulos, não telas
-│   ├── RootNavigator.tsx    splash enquanto a sessão é desconhecida, depois o NavigationContainer
-│   ├── RootStack.tsx        um Stack.Screen por módulo — renderiza só o lado que a sessão escolhe
-│   ├── RootNavigator.test.tsx  colocado — o gate de ponta a ponta: provider real, só o `api` trocado
-│   ├── AppStack.tsx         o shell logado — HomeScreen + o AccountStack do módulo auth
-│   ├── types.ts             RootStackParamList/AppStackParamList — a única declaração dos nomes de rota
+├── navigation/               composition root: lists modules, not screens
+│   ├── RootNavigator.tsx    splash while the session is unknown, then the NavigationContainer
+│   ├── RootStack.tsx        one Stack.Screen per module — renders only the side the session picks
+│   ├── RootNavigator.test.tsx  colocated — the gate end to end: real provider, only `api` swapped
+│   ├── AppStack.tsx         the signed-in shell — HomeScreen + the auth module's AccountStack
+│   ├── types.ts             RootStackParamList/AppStackParamList — the single declaration of route names
 │   ├── index.ts
 │   └── README.md
-├── modules/                  um módulo por feature — formato e lista completa em src/modules/README.md
-├── theme/                    design tokens — fonte única da verdade
-│   ├── tokens.js             CommonJS: alimenta tailwind.config.js (Node) e o TS (via index.ts)
-│   ├── ThemeProvider.tsx     aplica o tema ativo via vars() do NativeWind; montado em App.tsx
-│   ├── useThemeColors.ts     mapa semântico ativo, para o raro caso que precisa de valor literal fora do NativeWind
-│   ├── useThemePreference.ts { preference, setPreference } — override manual, hidratado do AsyncStorage
-│   ├── themePreferenceStorage.ts  leitura/escrita do preference no AsyncStorage
-│   ├── index.ts              reexporta tokens + parsePixels() para o código do app
-│   ├── *.test.ts(x)          colocados
+├── modules/                  one module per feature — format and full list in src/modules/README.md
+├── theme/                    design tokens — single source of truth
+│   ├── tokens.js             CommonJS: feeds tailwind.config.js (Node) and TS (via index.ts)
+│   ├── ThemeProvider.tsx     applies the active theme via NativeWind's vars(); mounted in App.tsx
+│   ├── useThemeColors.ts     active semantic map, for the rare case that needs a literal value outside NativeWind
+│   ├── useThemePreference.ts { preference, setPreference } — manual override, hydrated from AsyncStorage
+│   ├── themePreferenceStorage.ts  reads/writes the preference in AsyncStorage
+│   ├── index.ts              re-exports tokens + parsePixels() for app code
+│   ├── *.test.ts(x)          colocated
 │   └── README.md
-└── utils/                    helpers puros, sem React e sem I/O
-    ├── classnames.ts         clsx + tailwind-merge — merge de classNames condicional
-    ├── classnames.test.ts    colocado
+└── utils/                    pure helpers, no React and no I/O
+    ├── classnames.ts         clsx + tailwind-merge — conditional className merging
+    ├── classnames.test.ts    colocated
     ├── index.ts
     └── README.md
 ```
 
-Cada pasta em `src/` — e cada módulo dentro de `src/modules/` — tem seu
-próprio `README.md`, que é a documentação simplificada do que aquela pasta
-exporta. É onde `Components` / `Hooks` / `Functions` / `Constants` de cada
-uma estão listados; este documento não repete esse inventário, só o formato
-e as regras que atravessam pastas.
+Every folder in `src/` — and every module inside `src/modules/` — has its own
+`README.md`, which is the simplified documentation of what that folder
+exports. That is where each one's `Components` / `Hooks` / `Functions` /
+`Constants` are listed; this document does not repeat that inventory, only the
+format and the rules that cut across folders.
 
-`src/modules/` fica de propósito sem expandir aqui: ao contrário do resto da
-árvore, o número de módulos cresce com o app — um por feature —, e detalhar
-cada um faria esta seção crescer sem limite e ficar desatualizada a cada
-hook renomeado. `src/modules/README.md` tem o formato genérico de um módulo
-e a lista dos que existem hoje; o `README.md` de cada módulo tem seus
-exports e seu próprio diagrama `## Flow`.
+`src/modules/` is deliberately left unexpanded here: unlike the rest of the
+tree, the number of modules grows with the app — one per feature — and detailing
+each would make this section grow without bound and go stale with every renamed
+hook. `src/modules/README.md` has the generic shape of a module and the list of
+the ones that exist today; each module's `README.md` has its exports and its
+own `## Flow` diagram.
 
-### A regra de fronteira entre módulos
+### The module boundary rule
 
-| Quem | Pode importar |
+| Who | May import |
 |---|---|
-| arquivo dentro de `src/modules/<m>/**` | qualquer arquivo do mesmo módulo |
-| qualquer arquivo fora de `src/modules/<m>/` | só o que `src/modules/<m>/index.ts` exporta |
-| `src/modules/<m>/**` | nunca `src/modules/<outro>/**` |
-| `src/lib/**` | nada de React e nada de módulo — só rede, storage e afins |
-| `src/errors/**` | pode importar de `src/lib/`; nunca o contrário, e nunca um módulo |
-| `src/config/**` | nada além do ambiente; é folha, não importa ninguém |
+| a file inside `src/modules/<m>/**` | any file of the same module |
+| any file outside `src/modules/<m>/` | only what `src/modules/<m>/index.ts` exports |
+| `src/modules/<m>/**` | never `src/modules/<other>/**` |
+| `src/lib/**` | no React and no module — only network, storage and the like |
+| `src/errors/**` | may import from `src/lib/`; never the other way around, and never a module |
+| `src/config/**` | nothing beyond the environment; it is a leaf, it imports no one |
 
-Um componente só sai de dentro de um módulo para `src/components/` quando um
-**segundo** módulo passa a precisar dele — antes disso, mover é especulação.
+A component only leaves a module for `src/components/` when a **second** module
+starts needing it — before that, moving it is speculation.
 
-**Exceção:** uma primitiva de design system que qualquer app clonado deste
-boilerplate vai precisar — hoje, os inputs de formulário em
-`src/components/inputs/`, `forms/`, e `FormErrorMessage`/`SubmitButton` na
-raiz — pode nascer (ou ser promovida) direto para `src/components/` mesmo com
-um consumidor só neste repositório. O "segundo consumidor" aqui é o próximo
-app, não o próximo módulo: qualquer tela de formulário de qualquer app
-clonado precisa de uma mensagem de erro e de um botão de submit com estado
-de pending, então os dois saíram de `modules/auth/components/` junto com os
-inputs — não é mais o caso de "não há um argumento equivalente" que mantinha
-o `SubmitButton` para trás.
+**Exception:** a design-system primitive that any app cloned from this
+boilerplate is going to need — today, the form inputs in
+`src/components/inputs/`, `forms/`, and `FormErrorMessage`/`SubmitButton` at the
+root — may be born in (or be promoted straight to) `src/components/` even with
+a single consumer in this repository. The "second consumer" here is the next
+app, not the next module: any form screen in any cloned app needs an error
+message and a submit button with a pending state, so both left
+`modules/auth/components/` together with the inputs — it is no longer the case
+that "there is no equivalent argument" that kept `SubmitButton` behind.
 
-**O Biome checa a parte que dá para checar**, com `style/noRestrictedImports`
-(`patterns`) e overrides no `biome.json`:
+**Biome checks the part that can be checked**, with `style/noRestrictedImports`
+(`patterns`) and overrides in `biome.json`:
 
-- em qualquer arquivo, `@/modules/<m>/<qualquer coisa>` é erro — só o barrel
-  `@/modules/<m>` passa. Dentro do módulo os imports são relativos, então a
-  regra não os alcança;
-- `src/lib/**` não importa `react`, `react-native`, `@/components`, `@/errors`
-  nem módulo algum;
-- `src/errors/**` não importa módulo;
-- `src/modules/<m>/**` não importa `@/modules/**` — outro módulo, nem o próprio
-  pelo alias.
+- in any file, `@/modules/<m>/<anything>` is an error — only the
+  `@/modules/<m>` barrel passes. Inside the module the imports are relative, so
+  the rule does not reach them;
+- `src/lib/**` does not import `react`, `react-native`, `@/components`,
+  `@/errors` or any module;
+- `src/errors/**` does not import a module;
+- `src/modules/<m>/**` does not import `@/modules/**` — another module, nor
+  itself through the alias.
 
-**Limites, para não confundir com cobertura total.** O lint enxerga o alias
-`@/`, não um caminho relativo que escapa da pasta (`../../modules/x/...`) —
-esse continua sendo review, junto da regra de nunca escrever `../../`. E o
-último item é um override **por módulo**: um módulo novo precisa do seu
-próprio bloco em `biome.json`, senão nada impede que ele importe outro
-(`src/modules/README.md`). Não há dependency-cruiser; o Biome já resolve o que
-está escrito acima.
+**Limits, so this is not mistaken for full coverage.** The lint sees the `@/`
+alias, not a relative path that escapes the folder (`../../modules/x/...`) —
+that one remains a review catch, along with the rule of never writing `../../`.
+And the last item is an override **per module**: a new module needs its own
+block in `biome.json`, otherwise nothing stops it from importing another
+(`src/modules/README.md`). There is no dependency-cruiser; Biome already covers
+what is written above.
 
-`modules/<m>/components/` começa **flat** (um arquivo por componente).
-Subpastas por categoria só valem a pena quando categorias distintas ficam
-visíveis ali dentro — não se cria essa divisão antecipadamente.
+`modules/<m>/components/` starts **flat** (one file per component).
+Subfolders by category are only worth it when distinct categories become
+visible in there — that split is not created in advance.
 
-`src/components/` foge dessa regra desde o início: `inputs/` (primitivas de
-UI puras) e `forms/` (a integração com react-hook-form) já são duas
-categorias reais e distintas no dia em que a pasta ganha seu primeiro
-export — não uma divisão especulativa.
+`src/components/` escapes this rule from the start: `inputs/` (pure UI
+primitives) and `forms/` (the react-hook-form integration) are already two
+real, distinct categories on the day the folder gets its first export — not a
+speculative split.
 
 ---
 
 ## 3. Imports
 
-`@/` aponta para `src/` — declarado em `tsconfig.json`
-(`paths: { "@/*": ["./src/*"] }`) e resolvido pelo Metro através do preset
-Babel do Expo. Nunca escrever `../../`.
+`@/` points to `src/` — declared in `tsconfig.json`
+(`paths: { "@/*": ["./src/*"] }`) and resolved by Metro through the Expo Babel
+preset. Never write `../../`.
 
-Diferente do repo da API, aqui **não há passo de build** separando `src/` de
-`dist/`: o Metro compila TypeScript direto de `src/` para o bundle, tanto em
-desenvolvimento quanto no build de produção. Não existe, portanto, a
-pegadinha de servir código compilado velho por esquecer uma flag de runtime —
-não há `dist/` para divergir de `src/`.
+Unlike the API repo, here there is **no build step** separating `src/` from
+`dist/`: Metro compiles TypeScript straight from `src/` into the bundle, in both
+development and the production build. So there is no pitfall of serving stale
+compiled code because of a forgotten runtime flag — there is no `dist/` to
+diverge from `src/`.
 
 ---
 
-## 4. Regras com dente
+## 4. Rules with teeth
 
-Regra que não é verificada por máquina é combinado, e combinado não sobrevive
-a N projetos derivados. Estas falham em `pnpm check`:
+A rule that is not checked by a machine is an agreement, and an agreement does
+not survive N derived projects. These fail `pnpm check`:
 
-| Regra | Mecanismo | Verificado |
+| Rule | Mechanism | Checked |
 |---|---|---|
-| Componente é sempre arrow function | Biome `nursery/useReactFunctionComponentDefinition` (`namedComponents: arrowFunction`) | ✅ `pnpm lint` |
-| Função-expressão é sempre arrow function, nunca `function (...) {}` | Biome `style/useArrowFunction` (regra estável do preset `recommended`) | ✅ `pnpm lint` |
-| Sem número mágico | Biome `style/noMagicNumbers`, com exceção em `**/*.test.ts`/`**/*.test.tsx` | ✅ `pnpm lint` |
-| Nenhum `console.*` — o jeito mais comum de um token acabar no logcat | Biome `suspicious/noConsole` | ✅ `pnpm lint` |
-| Tipo em PascalCase; variável/const em `camelCase`, `PascalCase` ou `CONSTANT_CASE` | Biome `style/useNamingConvention`, com exceção em `src/theme/tokens.js` | ✅ `pnpm lint` |
-| Acesso indexado devolve `T \| undefined` | `tsconfig.json`: `noUncheckedIndexedAccess` | ✅ `pnpm typecheck` |
-| `@tailwind` não dispara at-rule desconhecida | Biome override `noUnknownAtRules: off` em `**/*.css` | ✅ evita falso positivo |
-| Fronteira entre módulos, `lib` sem React e `errors` sem módulo (§2) | Biome `style/noRestrictedImports` + overrides por pasta; só vê imports pelo alias `@/` | ✅ `pnpm lint` |
+| A component is always an arrow function | Biome `nursery/useReactFunctionComponentDefinition` (`namedComponents: arrowFunction`) | ✅ `pnpm lint` |
+| A function expression is always an arrow function, never `function (...) {}` | Biome `style/useArrowFunction` (stable rule of the `recommended` preset) | ✅ `pnpm lint` |
+| No magic number | Biome `style/noMagicNumbers`, exempting `**/*.test.ts`/`**/*.test.tsx` | ✅ `pnpm lint` |
+| No `console.*` — the most common way for a token to end up in logcat | Biome `suspicious/noConsole` | ✅ `pnpm lint` |
+| Type in PascalCase; variable/const in `camelCase`, `PascalCase` or `CONSTANT_CASE` | Biome `style/useNamingConvention`, exempting `src/theme/tokens.js` | ✅ `pnpm lint` |
+| Indexed access returns `T \| undefined` | `tsconfig.json`: `noUncheckedIndexedAccess` | ✅ `pnpm typecheck` |
+| `@tailwind` does not trigger an unknown at-rule | Biome override `noUnknownAtRules: off` in `**/*.css` | ✅ avoids a false positive |
+| Module boundary, `lib` without React and `errors` without a module (§2) | Biome `style/noRestrictedImports` + per-folder overrides; only sees imports through the `@/` alias | ✅ `pnpm lint` |
 
-**O que ainda depende só de revisão humana:**
+**What still depends on human review alone:**
 
-| Regra | Situação |
+| Rule | Status |
 |---|---|
-| Fronteira entre módulos por caminho relativo (§2) | ⚠️ catch em review — o lint só enxerga o alias `@/` |
-| String mágica (Biome só cobre número) | ⚠️ catch em review |
-| Declaração de função nomeada (`function foo() {}`, em vez de expressão) | ⚠️ Biome cobre expressão, não declaração |
-| Ordenação de classes Tailwind | ⚠️ desligada de propósito — `useSortedClasses` ainda é *work in progress* e não entende os tokens semânticos (§5); revisitar quando a regra estabilizar |
+| Module boundary through a relative path (§2) | ⚠️ review catch — the lint only sees the `@/` alias |
+| Magic string (Biome only covers numbers) | ⚠️ review catch |
+| Named function declaration (`function foo() {}`, as opposed to an expression) | ⚠️ Biome covers expressions, not declarations |
+| Tailwind class ordering | ⚠️ off on purpose — `useSortedClasses` is still *work in progress* and does not understand the semantic tokens (§5); revisit when the rule stabilises |
 
-### Legal / não legal
+### Do / Don't
 
 | ✅ | ❌ |
 |---|---|
 | `export const Button = (props: ButtonProps) => …` | `export function Button(props: ButtonProps) { … }` |
-| `navigation.navigate('Home')`, declarado em `AppStackParamList` | Um nome de rota que não está na lista de parâmetros — o `tsc` recusa |
-| `const REQUEST_TIMEOUT_MS = 5000` | `5000` solto no meio do código |
-| `bg-primary`, `text-content-muted` (semântico) | `bg-brand-500`, `text-neutral-900` (bruto) |
+| `navigation.navigate('Home')`, declared in `AppStackParamList` | A route name that is not in the param list — `tsc` rejects it |
+| `const REQUEST_TIMEOUT_MS = 5000` | A bare `5000` in the middle of the code |
+| `bg-primary`, `text-content-muted` (semantic) | `bg-brand-500`, `text-neutral-900` (raw) |
 | `import { X } from '@/theme'` | `import { X } from '../../theme'` |
-| `class ErrorBoundary extends Component` | Um boundary "funcional" — `getDerivedStateFromError` não existe como hook |
-| Versão exata no `package.json`, subida com `expo install` | Um `^`/`~` ou uma versão editada à mão fora do que `expo install` resolveria |
+| `class ErrorBoundary extends Component` | A "functional" boundary — `getDerivedStateFromError` does not exist as a hook |
+| Exact version in `package.json`, bumped with `expo install` | A `^`/`~` or a hand-edited version outside what `expo install` would resolve |
 
 ---
 
-## 5. Tema e estilização
+## 5. Theme and styling
 
-`src/theme/tokens.js` é a **fonte única da verdade**, e é CommonJS de
-propósito: o mesmo arquivo alimenta `tailwind.config.js` (Node) e o código
-TypeScript, via `src/theme/index.ts`, com os tipos inferidos do próprio arquivo — um token
-nunca diverge entre os dois lados.
+`src/theme/tokens.js` is the **single source of truth**, and it is CommonJS on
+purpose: the same file feeds `tailwind.config.js` (Node) and the TypeScript
+code, via `src/theme/index.ts`, with the types inferred from the file itself — a
+token never diverges between the two sides.
 
-Os valores são strings CSS (`'16px'`), não números: o NativeWind compila
-Tailwind para CSS antes de converter para estilos nativos, e um número solto
-não é CSS válido. Para usar um token fora do NativeWind (uma cor de
-`ActivityIndicator`, por exemplo), `parsePixels()` converte de volta para o
-número que a API nativa espera.
+The values are CSS strings (`'16px'`), not numbers: NativeWind compiles
+Tailwind to CSS before converting to native styles, and a bare number is not
+valid CSS. To use a token outside NativeWind (an `ActivityIndicator` colour,
+for example), `parsePixels()` converts it back to the number the native API
+expects.
 
-### Cores brutas vs. semânticas
+### Raw vs. semantic colours
 
-| Use isto | Em vez disto |
+| Use this | Instead of this |
 |---|---|
 | `bg-background`, `bg-surface` | `bg-neutral-50` |
 | `text-content`, `text-content-muted` | `text-neutral-900` |
 | `bg-primary` | `bg-brand-500` |
 | `border-border` | `border-neutral-200` |
 
-Rebranding acontece então num único lugar (`semanticColors`/`semanticColorsDark`,
-em `tokens.js`) — nenhuma tela precisa ser tocada.
+Rebranding then happens in a single place (`semanticColors`/`semanticColorsDark`,
+in `tokens.js`) — no screen needs to be touched.
 
-**Dark mode funciona por variáveis CSS aplicadas em runtime, não por classe
-`dark:` nem por CSS estático.** `tailwind.config.js` mapeia cada alias
-semântico para `var(--color-<alias>)`; `ThemeProvider`
-(`src/theme/ThemeProvider.tsx`), montado logo abaixo do
-`GestureHandlerRootView` em `App.tsx`, decide o valor de cada variável via
-`vars()` do NativeWind, escolhendo entre `semanticColors` e
-`semanticColorsDark` conforme o tema resolvido. As duas outras abordagens —
-CSS estático com `:root`/`.dark`, ou uma variante `dark:` em cada classe —
-foram descartadas: a primeira duplicaria os valores fora do `tokens.js`; a
-segunda exigiria tocar toda tela que usa um alias. Ver decisão D1 em
-[`docs/superpowers/specs/2026-09-22-dark-mode-design.md`](docs/superpowers/specs/2026-09-22-dark-mode-design.md).
+**Dark mode works through CSS variables applied at runtime, not through a
+`dark:` class or static CSS.** `tailwind.config.js` maps each semantic alias to
+`var(--color-<alias>)`; `ThemeProvider` (`src/theme/ThemeProvider.tsx`),
+mounted right below the `GestureHandlerRootView` in `App.tsx`, decides the
+value of each variable via NativeWind's `vars()`, choosing between
+`semanticColors` and `semanticColorsDark` according to the resolved theme. The
+two other approaches — static CSS with `:root`/`.dark`, or a `dark:` variant on
+every class — were discarded: the first would duplicate the values outside
+`tokens.js`; the second would require touching every screen that uses an alias.
 
-O usuário segue o sistema por padrão; `useThemePreference()`
-(`src/theme/useThemePreference.ts`) guarda um override manual
-(`'system' | 'light' | 'dark'`) no `AsyncStorage` e o aplica via
-`colorScheme.set()`, do próprio NativeWind. `app.json` usa
-`"userInterfaceStyle": "automatic"` — fixo em `"light"`, o sistema operacional
-nunca reportaria um tema escuro para o app, independente de qualquer coisa
-aqui.
+The user follows the system by default; `useThemePreference()`
+(`src/theme/useThemePreference.ts`) stores a manual override
+(`'system' | 'light' | 'dark'`) in `AsyncStorage` and applies it via NativeWind's
+own `colorScheme.set()`. `app.json` uses `"userInterfaceStyle": "automatic"` —
+pinned to `"light"`, the operating system would never report a dark theme to
+the app, regardless of anything here.
 
-### `classnames()` e a regra de estilização
+### `classnames()` and the styling rule
 
-`src/utils/classnames.ts` combina `clsx` (junção condicional) com
-`tailwind-merge` (resolve conflito — `classnames('p-2', 'p-4')` → `'p-4'`). É o que todo componente
-que aceita uma prop `className` usa para deixar quem o consome ajustar layout
-sem `View`s extras.
+`src/utils/classnames.ts` combines `clsx` (conditional joining) with
+`tailwind-merge` (conflict resolution — `classnames('p-2', 'p-4')` → `'p-4'`).
+It is what every component that accepts a `className` prop uses to let its
+consumer adjust layout without extra `View`s.
 
-**Só classes NativeWind — nada de `StyleSheet.create` ou objeto de estilo
-inline**, a menos que uma API force isso. A única exceção hoje é
-`ROOT_STYLE` em `App.tsx`: `GestureHandlerRootView` precisa de um objeto de estilo real
-porque o NativeWind não alcança essa prop —
-`const ROOT_STYLE = { flex: 1 } as const`, extraído para não repetir um
-objeto literal solto no JSX.
+**NativeWind classes only — no `StyleSheet.create` or inline style object**,
+unless an API forces it. The only exception today is `ROOT_STYLE` in
+`App.tsx`: `GestureHandlerRootView` needs a real style object because
+NativeWind does not reach that prop — `const ROOT_STYLE = { flex: 1 } as const`,
+extracted so as not to repeat a loose object literal in the JSX.
 
 ---
 
-## 6. Navegação
+## 6. Navigation
 
-**React Navigation**, não Expo Router: rotas explícitas e tipadas em
-`src/navigation/`, sem acoplar a estrutura de pastas à navegação. Toda a
-navegação vive ali e em nenhum outro lugar.
+**React Navigation**, not Expo Router: explicit, typed routes in
+`src/navigation/`, without coupling the folder structure to navigation. All
+navigation lives there and nowhere else.
 
-`src/navigation/` é um **composition root**: ele lista módulos, não telas.
-`RootStack` tem um `Stack.Screen` por módulo, e as telas de cada módulo ficam
-no navigator do próprio módulo (`src/modules/auth/navigation/AuthStack.tsx`).
-Nomes de rota são literais no local de chamada — `<Stack.Screen name="Home">`,
-`navigation.navigate('Home')`. Não há objeto de constantes: a lista de
-parâmetros já é a única declaração de cada nome, e duplicá-la num `const object`
-daria duas fontes para a mesma verdade sem ganhar checagem nenhuma.
+`src/navigation/` is a **composition root**: it lists modules, not screens.
+`RootStack` has one `Stack.Screen` per module, and each module's screens live
+in the module's own navigator (`src/modules/auth/navigation/AuthStack.tsx`).
+Route names are literals at the call site — `<Stack.Screen name="Home">`,
+`navigation.navigate('Home')`. There is no constants object: the param list is
+already the single declaration of each name, and duplicating it in a `const
+object` would give two sources for the same truth without gaining any checking.
 
-`RootStackParamList` (em `types.ts`) é registrado globalmente:
+`RootStackParamList` (in `types.ts`) is registered globally:
 
 ```ts
 declare global {
@@ -337,77 +329,76 @@ declare global {
 }
 ```
 
-É esse registro que faz `navigation.navigate()` ser tipado em qualquer lugar
-do app sem precisar importar a lista de parâmetros manualmente. Cada entrada
-usa `NavigatorScreenParams<...>`, que é o que mantém tipado um
-`navigate('App', { screen: 'Home' })` aninhado.
+That registration is what makes `navigation.navigate()` typed anywhere in the
+app without having to import the param list manually. Each entry uses
+`NavigatorScreenParams<...>`, which is what keeps a nested
+`navigate('App', { screen: 'Home' })` typed.
 
-**Adicionar uma tela são duas edições — no par do módulo dono dela:** uma
-entrada na lista de parâmetros em `types.ts` e um `Stack.Screen` no navigator
-daquele módulo. Esquecer a primeira quebra o `tsc` — não é convenção, é o
-compilador. Adicionar um **módulo** novo toca o `navigation/` dele mais uma
-linha em `types.ts` e outra em `RootStack.tsx` aqui.
+**Adding a screen is two edits — in the pair belonging to its module:** one
+entry in the param list in `types.ts` and one `Stack.Screen` in that module's
+navigator. Forgetting the first breaks `tsc` — it is not a convention, it is the
+compiler. Adding a new **module** touches its `navigation/` plus one line in
+`types.ts` and another in `RootStack.tsx` here.
 
-Nome de rota é PascalCase por convenção do React Navigation, e como agora são
-chaves literais da lista de parâmetros, o `biome.json` libera `typeProperty` em
-PascalCase para `**/navigation/types.ts` (§9).
+Route names are PascalCase by React Navigation convention, and since they are
+now literal keys of the param list, `biome.json` allows PascalCase
+`typeProperty` for `**/navigation/types.ts` (§9).
 
-### Estado atual
+### Current state
 
-`RootNavigator` mostra o `SplashScreen` enquanto a sessão é desconhecida
-(`AUTH_STATUSES.LOADING`) e só então monta o `NavigationContainer` — montar o
-container durante o boot significaria montar um navigator cuja primeira tela
-seria trocada em seguida.
+`RootNavigator` shows the `SplashScreen` while the session is unknown
+(`AUTH_STATUSES.LOADING`) and only then mounts the `NavigationContainer` —
+mounting the container during boot would mean mounting a navigator whose first
+screen would be replaced right after.
 
-`RootStack` renderiza **um lado só**: `AuthStack` quando deslogado, `AppStack`
-quando logado. Renderizar só um lado, em vez de registrar os dois e navegar,
-é o que deixa o botão voltar do Android sem histórico para retornar a uma tela
-logada depois do logout.
+`RootStack` renders **only one side**: `AuthStack` when signed out, `AppStack`
+when signed in. Rendering only one side, instead of registering both and
+navigating, is what stops the Android back button, with no history, from
+returning to a signed-in screen after logout.
 
-O desenho é o da skill `modularizing-react-navigation` (`.claude/skills/`),
-agora com código: `auth` é o primeiro módulo a ter seu próprio navigator.
-
----
-
-## 7. Testes
-
-**Jest**, via preset `jest-expo`, mais **React Native Testing Library** para
-componentes.
-
-- Tests são **colocados** — `classnames.ts` + `classnames.test.ts`, nunca numa pasta
-  `__tests__/`. O sufixo `.test.ts`/`.test.tsx` não é só preferência de nome:
-  é exatamente o que o override do Biome casa para isentar `noMagicNumbers`
-  (§4) — um arquivo nomeado diferente (`.spec.tsx`, dentro de `__tests__/`)
-  ainda roda como teste, mas perde a isenção em silêncio e quebra `pnpm lint`.
-- Lógica pura (`src/utils/`, hooks, lógica de módulo) usa Jest puro —
-  `describe`/`it`/`expect`, como em `classnames.test.ts`.
-- Componentes e telas usam `@testing-library/react-native`, testando
-  comportamento observável pelo usuário — texto renderizado, estado de
-  acessibilidade, `fireEvent`. **Nunca** teste de snapshot. Na versão
-  instalada, `render()` e `fireEvent.*()` devolvem Promise e precisam de
-  `await` — omitir produz uma falha confusa mais adiante, não um erro óbvio
-  no ponto de chamada. Desenho completo em
-  [`docs/superpowers/specs/2026-08-20-unit-testing-setup-design.md`](docs/superpowers/specs/2026-08-20-unit-testing-setup-design.md).
-
-`pnpm test` **não** faz parte de `pnpm check` — typecheck e lint continuam
-sendo o portão rápido de pré-commit; teste roda sob demanda ou em CI.
-
-Não há suíte de E2E neste repositório hoje — o Maestro foi removido porque
-exigia Android Studio ou Simulador iOS configurados localmente, o que este
-ambiente não tem. O histórico da decisão original está em
-[`docs/superpowers/specs/2026-08-21-maestro-e2e-setup-design.md`](docs/superpowers/specs/2026-08-21-maestro-e2e-setup-design.md).
+The design is that of the `modularizing-react-navigation` skill
+(`.claude/skills/`), now with code: `auth` is the first module to have its own
+navigator.
 
 ---
 
-## 8. Comandos
+## 7. Tests
+
+**Jest**, via the `jest-expo` preset, plus **React Native Testing Library** for
+components.
+
+- Tests are **colocated** — `classnames.ts` + `classnames.test.ts`, never in a
+  `__tests__/` folder. The `.test.ts`/`.test.tsx` suffix is not just a naming
+  preference: it is exactly what the Biome override matches to exempt
+  `noMagicNumbers` (§4) — a differently named file (`.spec.tsx`, inside
+  `__tests__/`) still runs as a test but silently loses the exemption and
+  breaks `pnpm lint`.
+- Pure logic (`src/utils/`, hooks, module logic) uses plain Jest —
+  `describe`/`it`/`expect`, as in `classnames.test.ts`.
+- Components and screens use `@testing-library/react-native`, testing
+  behaviour observable by the user — rendered text, accessibility state,
+  `fireEvent`. **Never** snapshot tests. In the installed version, `render()`
+  and `fireEvent.*()` return a Promise and need `await` — omitting it produces
+  a confusing failure further on, not an obvious error at the call site.
+
+`pnpm test` is **not** part of `pnpm check` — typecheck and lint remain the
+fast pre-commit gate; tests run on demand or in CI.
+
+There is no E2E suite in this repository today — Maestro was removed because it
+required a local Android Studio or iOS Simulator setup, which this environment
+does not have.
+
+---
+
+## 8. Commands
 
 ```bash
 pnpm install
-pnpm start               # Metro — abre o Expo Go / dev tools
-pnpm android              # abre no emulador/dispositivo Android via Expo Go
-pnpm ios                  # abre no simulador iOS via Expo Go (só macOS)
-pnpm web                  # abre no navegador
-pnpm check                # typecheck + lint — rodar antes de cada commit
+pnpm start               # Metro — opens Expo Go / dev tools
+pnpm android              # opens on the Android emulator/device via Expo Go
+pnpm ios                  # opens on the iOS simulator via Expo Go (macOS only)
+pnpm web                  # opens in the browser
+pnpm check                # typecheck + lint — run before every commit
 pnpm typecheck            # tsc --noEmit
 pnpm lint                 # biome check
 pnpm lint:fix             # biome check --write
@@ -416,161 +407,161 @@ pnpm test                 # jest --watchAll
 pnpm test:ci               # jest --ci
 ```
 
-`android/` e `ios/` não estão no repo: são saída do `expo prebuild`, e o
-`.gitignore` ignora as duas. Do lado nativo o prebuild é descartável — regenera
-igual —, mas ele **edita arquivos versionados** como efeito colateral, e três
-coisas precisam voltar atrás depois de cada execução:
+`android/` and `ios/` are not in the repo: they are `expo prebuild` output, and
+`.gitignore` ignores both. On the native side the prebuild is disposable — it
+regenerates identically —, but it **edits versioned files** as a side effect,
+and three things need to be undone after each run:
 
-- escreve `android.package` no `app.json`, com o placeholder derivado
+- it writes `android.package` into `app.json`, with the derived placeholder
   `com.anonymous.<slug>`;
-- reescreve os scripts `android`/`ios` de `expo start --*` para `expo run:*`,
-  o fluxo de dev client que saiu do repo junto com o Maestro;
-- reformata o `app.json`, o que quebra o `pnpm lint` até rodar `pnpm lint:fix`.
+- it rewrites the `android`/`ios` scripts from `expo start --*` to
+  `expo run:*`, the dev client flow that left the repo along with Maestro;
+- it reformats `app.json`, which breaks `pnpm lint` until `pnpm lint:fix` runs.
 
-Então: `git checkout -- package.json`, apagar a linha `package` do `app.json`,
-`pnpm lint:fix`, e confirmar no `git diff` que sobrou só a mudança pretendida —
-hoje as que mexem no nativo de propósito são o `blockedPermissions` e as flags
-de release do `expo-build-properties`, ambas no `app.json` (§9).
-
----
-
-## 9. Versões e decisões travadas
-
-**Dependências usam versão exata, sem `^`/`~`**, como no repo da API: pinar
-tudo elimina a divergência entre apps clonados. As versões do SDK são as que
-`expo install` resolve para o Expo 57 — para subir uma, use `expo install` em
-vez de editar o número à mão, que é o que o `expo-doctor` existe para pegar.
-
-**`pnpm-workspace.yaml`, não `.npmrc`.** O pnpm 11 deixou de ler `.npmrc`
-para essas chaves; é ali que moram:
-- `nodeLinker: hoisted` — o Metro não segue de forma confiável os
-  `node_modules` simbólicos do pnpm, então o layout em disco precisa ser
-  plano. Mantenha essa linha se este repo virar um monorepo.
-- `enablePrePostScripts: true` — os módulos nativos do Expo dependem de
-  scripts de `postinstall` rodando.
-- `minimumReleaseAgeExclude` — a lista de pacotes Expo isentos da idade
-  mínima de publicação que o pnpm passou a exigir por padrão (proteção contra
-  pacote comprometido publicado há minutos); os pacotes do SDK testado juntos
-  precisam ficar instaláveis imediatamente após o release.
-- `allowBuilds: { '@parcel/watcher': true, unrs-resolver: true }` — scripts
-  de build de dois pacotes específicos, explicitamente permitidos; por padrão
-  o pnpm bloqueia scripts de build de dependências.
-
-**`overrides: { js-yaml@3: 3.15.2 }` força uma versão além do que qualquer
-dependência direta pede.** O `js-yaml` 3.15.1 tem a CVE GHSA-2883-xcg3-v3hh
-(`maxTotalMergeKeys` não limita CPU quando a fonte do merge está vazia); ele só
-chega a este repo por `babel-plugin-istanbul`, cujo próprio range (`^3.13.1`)
-já permite a versão corrigida — mas `pnpm update` não reresolve uma
-dependência transitiva sozinho, daí a versão precisar ser forçada aqui. Remova
-este override quando a toolchain do Jest passar a trazer o `js-yaml` corrigido
-por conta própria.
-
-**`pnpm-workspace.yaml` não faz deste repo um monorepo** — é um pacote único;
-o arquivo existe só porque é para onde essas configurações do pnpm se
-mudaram.
-
-**`packageManager: pnpm@11.22.0`** fixa a versão do pnpm via Corepack — mesmo
-mecanismo do repo da API.
-
-**`blockedPermissions` tira duas permissões que nada usa.** O manifest Android
-não está no repo (§8), então a lista de permissões é a que o template bare do
-Expo gera — e o comentário do próprio template diz "OPTIONAL PERMISSIONS,
-REMOVE WHATEVER YOU DO NOT NEED". Nada na árvore declara `SYSTEM_ALERT_WINDOW`
-nem `VIBRATE` fora do source set de debug do `react-native`, e a primeira é
-"desenhar sobre outros apps": aparece na listagem da Play, entra em
-questionário de segurança e é o vetor de overlay. Pedir sem usar é custo de
-confiança sem contrapartida — e, em boilerplate, todo app clonado herdaria.
-
-O par `READ`/`WRITE_EXTERNAL_STORAGE` fica de fora do bloqueio: o
-`expo-file-system` declara as duas no próprio manifest com
-`maxSdkVersion="32"`, e `blockedPermissions` injeta `tools:node="remove"`, que
-vence o merge contra manifest de biblioteca — bloquear aqui tiraria uma
-permissão de que uma lib precisa no Android 12 e abaixo.
-
-**R8 e shrink de recursos ligados pelo `expo-build-properties`, não pelo
-`gradle.properties`.** O template bare deixa
-`android.enableMinifyInReleaseBuilds` em `false`, então a release sai com o
-código nativo Java/Kotlin sem shrink nem ofuscação. Ligar isso editando
-`android/gradle.properties` não sobrevive ao próximo prebuild (§8) — por isso
-as duas flags moram no `app.json`, como opções do plugin: a config versionada é
-a fonte, `android/` é saída. O `proguard-rules.pro` gerado já mantém Reanimated
-e TurboModules, mas **uma release de verdade ainda precisa ser exercitada antes
-de publicar**: o R8 quebra o que depende de reflection, e isso não aparece em
-debug. Nada aqui toca o bundle JS — esse caminho é do Hermes, já ligado por
-padrão.
-
-**Nenhuma ofuscação de JS.** O bundle é público: quem tem o APK extrai
-`assets/index.android.bundle` e roda `strings`, e o bytecode Hermes guarda a
-tabela de strings em claro — URL da API, os caminhos de `/auth/*`, a storage
-key e todo o `COPY` saem legíveis de lá. Um `javascript-obfuscator` não esconde
-nada disso e cobra caro: o Reanimated embute ~200 worklets como código-fonte JS
-legível no bundle, porque worklets são compilados em runtime na thread de UI, e
-reescrever essas strings quebra as animações só em release. A defesa é
-arquitetural e já está de pé — access token só em memória, refresh token no
-keystore/keychain, e nenhuma regra decidida no cliente.
-
-**A keystore é da EAS, nunca do repo.** O bloco `release` que o prebuild gera
-assina com a keystore de *debug*, senha `android` em texto plano; a Play
-recusa, e um APK assim é para medir, não para distribuir. O `.gitignore` já
-barra `*.jks`/`*.keystore`/`credentials.json` para que a real não chegue a um
-remoto nem por acidente — uma keystore vazada não pode mais assinar
-atualizações do app publicado sob ela.
-
-**NativeWind v4 + Tailwind 3.4, não o preview do NativeWind v5.** v4 é a
-versão estável e mantém `tailwind.config.js` em JS, o que permite os tokens
-virem de um arquivo compartilhado (§5). Tailwind v4 move os tokens para
-`@theme` no CSS, o que quebraria essa fonte única.
-
-**React Navigation, não Expo Router** — rotas explícitas e tipadas em
-`src/navigation/`, sem acoplar a estrutura de pastas à navegação (§6).
-
-**axios, não `fetch` à mão.** `baseURL`, timeout e cancelamento vêm da
-instância, e os dois interceptors — bearer token na saída, tradução para
-`ApiError` na volta — substituem o cliente que existia escrito à mão. O teste
-colocado troca `defaults.adapter` em vez de forçar o adapter `fetch`: em React
-Native o adapter padrão é o XHR, e testar contra outro seria testar uma pilha
-de rede que o app não usa.
-
-**O toast é componente nosso, não uma lib.** Nenhuma lib popular de toast do
-React Native estiliza por `className` — todas usam `StyleSheet`/props — então
-usar os tokens semânticos exigiria passar um componente de render customizado,
-ou seja, escrever o visual do mesmo jeito **e** carregar a dependência. Sobra
-para nós um slot, um timer e um fade.
-
-**`Animated` do core, não Reanimated,** para esse fade de 200ms. O Reanimated
-está instalado (o NativeWind v4 exige), mas usá-lo aqui traria o mock dele para
-os testes do toast sem nada em troca: ele ganha o lugar em interação por gesto
-a 60fps, não numa transição de opacidade.
-
-**Nome de rota é literal, não constante** (§6), o que faz a lista de parâmetros
-ser a única declaração de cada nome. Como esses nomes são PascalCase por
-convenção do React Navigation, o `biome.json` libera `typeProperty` em
-PascalCase para `**/navigation/types.ts` — mesma natureza da isenção do
-`tokens.js`: a forma da chave é ditada pela biblioteca, não escolhida por nós.
-
-**Biome, não ESLint + Prettier.** Um binário, uma config, um passe — sem
-matriz de plugins para manter sincronizada entre os apps que clonam este
-repo. Também é quem dá dente a duas convenções direto (§4): componente como
-arrow function e nenhum número mágico.
-
-**`noUncheckedIndexedAccess` ligado** — acesso indexado devolve
-`T | undefined`. Mais rígido, e pega bugs reais de acesso a array/record.
+So: `git checkout -- package.json`, delete the `package` line from `app.json`,
+`pnpm lint:fix`, and confirm in `git diff` that only the intended change is
+left — today the ones that touch the native side on purpose are
+`blockedPermissions` and the `expo-build-properties` release flags, both in
+`app.json` (§9).
 
 ---
 
-## 10. O que ainda não existe
+## 9. Versions and locked decisions
 
-Listado para não ser confundido com omissão, sem detalhar o que não foi
-construído:
+**Dependencies use exact versions, without `^`/`~`**, as in the API repo:
+pinning everything eliminates divergence between cloned apps. The SDK versions
+are the ones `expo install` resolves for Expo 57 — to bump one, use `expo
+install` instead of editing the number by hand, which is what `expo-doctor`
+exists to catch.
 
-login com Google (`POST /auth/google`, adiado até o primeiro app se aproximar
-do release) · `src/hooks/`, `src/store/`
-(criados só quando algo precisar deles, §1) · telemetria e crash reporting
-(nenhum sink: a camada de erros não reporta para lugar nenhum) · fila de toasts,
-swipe para dispensar e boundary por tela (§6 da spec da camada de erros) · flow
-de E2E · transporte por cookie no alvo web (o app pede sempre `refreshTransport:
-'body'`, e sem cookie o `storage.web.ts` guarda o refresh token no `localStorage`
-— por isso ele aborta no boot fora de `__DEV__`: web é conveniência de
-desenvolvimento, não superfície de produção) · refresh proativo agendado pelo
-`exp` do JWT · encerrar uma sessão específica (a API só expõe a listagem, não a
-revogação por aparelho).
+**`pnpm-workspace.yaml`, not `.npmrc`.** pnpm 11 stopped reading `.npmrc` for
+these keys; this is where they live:
+- `nodeLinker: hoisted` — Metro does not reliably follow pnpm's symlinked
+  `node_modules`, so the on-disk layout needs to be flat. Keep this line if
+  this repo becomes a monorepo.
+- `enablePrePostScripts: true` — Expo's native modules depend on `postinstall`
+  scripts running.
+- `minimumReleaseAgeExclude` — the list of Expo packages exempt from the
+  minimum publication age pnpm now requires by default (protection against a
+  compromised package published minutes ago); the SDK packages tested together
+  need to be installable immediately after release.
+- `allowBuilds: { '@parcel/watcher': true, unrs-resolver: true }` — build
+  scripts of two specific packages, explicitly allowed; by default pnpm blocks
+  dependencies' build scripts.
+
+**`overrides: { js-yaml@3: 3.15.2 }` forces a version beyond what any direct
+dependency asks for.** `js-yaml` 3.15.1 has the CVE GHSA-2883-xcg3-v3hh
+(`maxTotalMergeKeys` does not bound CPU when the merge source is empty); it
+only reaches this repo through `babel-plugin-istanbul`, whose own range
+(`^3.13.1`) already allows the fixed version — but `pnpm update` does not
+re-resolve a transitive dependency on its own, hence the version needing to be
+forced here. Remove this override when the Jest toolchain starts shipping the
+fixed `js-yaml` on its own.
+
+**`pnpm-workspace.yaml` does not make this repo a monorepo** — it is a single
+package; the file exists only because it is where these pnpm settings moved to.
+
+**`packageManager: pnpm@11.22.0`** pins the pnpm version via Corepack — the same
+mechanism as the API repo.
+
+**`blockedPermissions` removes two permissions nothing uses.** The Android
+manifest is not in the repo (§8), so the permission list is the one the Expo
+bare template generates — and the template's own comment says "OPTIONAL
+PERMISSIONS, REMOVE WHATEVER YOU DO NOT NEED". Nothing in the tree declares
+`SYSTEM_ALERT_WINDOW` or `VIBRATE` outside `react-native`'s debug source set,
+and the first is "draw over other apps": it shows up in the Play listing, goes
+into the security questionnaire and is the overlay vector. Asking for it
+without using it is a trust cost with nothing in return — and, in a
+boilerplate, every cloned app would inherit it.
+
+The `READ`/`WRITE_EXTERNAL_STORAGE` pair is left out of the block:
+`expo-file-system` declares both in its own manifest with
+`maxSdkVersion="32"`, and `blockedPermissions` injects `tools:node="remove"`,
+which wins the merge against a library manifest — blocking here would remove a
+permission a lib needs on Android 12 and below.
+
+**R8 and resource shrinking enabled through `expo-build-properties`, not
+through `gradle.properties`.** The bare template leaves
+`android.enableMinifyInReleaseBuilds` at `false`, so the release ships with
+native Java/Kotlin code neither shrunk nor obfuscated. Turning that on by
+editing `android/gradle.properties` does not survive the next prebuild (§8) —
+which is why both flags live in `app.json`, as plugin options: the versioned
+config is the source, `android/` is output. The generated `proguard-rules.pro`
+already keeps Reanimated and TurboModules, but **a real release still needs to
+be exercised before publishing**: R8 breaks whatever depends on reflection, and
+that does not show up in debug. Nothing here touches the JS bundle — that path
+belongs to Hermes, already on by default.
+
+**No JS obfuscation.** The bundle is public: whoever has the APK extracts
+`assets/index.android.bundle` and runs `strings`, and Hermes bytecode keeps the
+string table in the clear — API URL, the `/auth/*` paths, the storage key and
+all of `COPY` come out readable from there. A `javascript-obfuscator` hides none
+of that and charges dearly: Reanimated embeds ~200 worklets as readable JS
+source in the bundle, because worklets are compiled at runtime on the UI
+thread, and rewriting those strings breaks the animations in release only. The
+defence is architectural and already in place — access token in memory only,
+refresh token in the keystore/keychain, and no rule decided on the client.
+
+**The keystore belongs to EAS, never to the repo.** The `release` block the
+prebuild generates signs with the *debug* keystore, password `android` in plain
+text; Play refuses it, and an APK like that is for measuring, not distributing.
+`.gitignore` already blocks `*.jks`/`*.keystore`/`credentials.json` so that the
+real one does not reach a remote even by accident — a leaked keystore can no
+longer sign updates to the app published under it.
+
+**NativeWind v4 + Tailwind 3.4, not the NativeWind v5 preview.** v4 is the
+stable version and keeps `tailwind.config.js` in JS, which lets the tokens come
+from a shared file (§5). Tailwind v4 moves the tokens to `@theme` in CSS, which
+would break that single source.
+
+**React Navigation, not Expo Router** — explicit, typed routes in
+`src/navigation/`, without coupling the folder structure to navigation (§6).
+
+**axios, not a hand-rolled `fetch`.** `baseURL`, timeout and cancellation come
+from the instance, and the two interceptors — bearer token on the way out,
+translation to `ApiError` on the way back — replace the hand-written client that
+used to exist. The colocated test swaps `defaults.adapter` instead of forcing
+the `fetch` adapter: in React Native the default adapter is XHR, and testing
+against another would be testing a network stack the app does not use.
+
+**The toast is our own component, not a lib.** No popular React Native toast
+lib styles through `className` — they all use `StyleSheet`/props — so using the
+semantic tokens would require passing a custom render component, that is,
+writing the visuals the same way **and** carrying the dependency. What is left
+for us is one slot, one timer and one fade.
+
+**Core `Animated`, not Reanimated,** for that 200ms fade. Reanimated is
+installed (NativeWind v4 requires it), but using it here would bring its mock
+into the toast tests with nothing in return: it earns its place in
+gesture-driven interaction at 60fps, not in an opacity transition.
+
+**A route name is a literal, not a constant** (§6), which makes the param list
+the single declaration of each name. Since those names are PascalCase by React
+Navigation convention, `biome.json` allows PascalCase `typeProperty` for
+`**/navigation/types.ts` — same nature as the `tokens.js` exemption: the shape
+of the key is dictated by the library, not chosen by us.
+
+**Biome, not ESLint + Prettier.** One binary, one config, one pass — no plugin
+matrix to keep in sync across the apps that clone this repo. It is also what
+gives two conventions teeth directly (§4): components as arrow functions and no
+magic numbers.
+
+**`noUncheckedIndexedAccess` on** — indexed access returns `T | undefined`.
+Stricter, and it catches real array/record access bugs.
+
+---
+
+## 10. What does not exist yet
+
+Listed so it is not mistaken for an omission, without detailing what was not
+built:
+
+Google sign-in (`POST /auth/google`, deferred until the first app nears
+release) · `src/hooks/`, `src/store/` (created only when something needs them,
+§1) · telemetry and crash reporting (no sink: the error layer reports nowhere) ·
+toast queue, swipe to dismiss and per-screen boundary · E2E flow · cookie transport on the web target (the app always asks for
+`refreshTransport: 'body'`, and without a cookie `storage.web.ts` keeps the
+refresh token in `localStorage` — which is why it aborts at boot outside
+`__DEV__`: web is a development convenience, not a production surface) ·
+proactive refresh scheduled by the JWT's `exp` · ending a specific session (the
+API only exposes the listing, not per-device revocation).
