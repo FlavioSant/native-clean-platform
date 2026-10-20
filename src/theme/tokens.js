@@ -70,10 +70,10 @@ const semanticColors = {
 
 /**
  * Dark values for the same aliases, mapped by hand rather than inverted
- * mechanically — see decision D5 in
- * docs/superpowers/specs/2026-09-22-dark-mode-design.md for why
- * `content-inverse` stays unchanged and `danger-surface` reuses a neutral
- * step instead of a colour the `danger` scale does not have.
+ * mechanically. `content-inverse` stays unchanged because it is always text on
+ * a `bg-primary` control, not the opposite of `content`; `danger-surface`
+ * reuses a neutral step because the `danger` scale has no near-black step, and
+ * adding one would grow the token schema for a single use.
  */
 const semanticColorsDark = {
   background: colors.neutral[950],

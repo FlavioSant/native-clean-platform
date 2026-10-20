@@ -8,9 +8,8 @@ import { useThemePreference } from './useThemePreference';
 const CSS_VARIABLE_PREFIX = '--color-';
 
 /**
- * Applies the active theme to the whole app via NativeWind's `vars()` (D1 in
- * docs/superpowers/specs/2026-09-22-dark-mode-design.md), and triggers
- * `useThemePreference`'s boot-time hydrate-and-apply effect (D3) — this
+ * Applies the active theme to the whole app via NativeWind's `vars()`, and
+ * triggers `useThemePreference`'s boot-time hydrate-and-apply effect — this
  * component itself never reads that hook's return value.
  */
 export const ThemeProvider = ({ children }: PropsWithChildren) => {
